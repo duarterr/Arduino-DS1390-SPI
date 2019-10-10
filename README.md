@@ -9,7 +9,9 @@ All parameters that can be passed as arguments to functions expect to receive va
 ## Notes
 
 A 200ms (min) delay is required after boot to read/write device memory (tRST).
+
 Works with DS1391 aswell.
+
 Alarm-related functions not implemented yet.
 
 ## Credits
@@ -28,16 +30,6 @@ https://github.com/duarterr/Arduino-DS1390-SPI
 
 ## License
 
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
+This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.
 
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+This library is distributed in the hope that it will be useful, 1but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
