@@ -37,14 +37,17 @@ void setup()
   // Delay for DS1390 boot (mandatory)
   delay (200);
 
+  // Checkif memory was lost recently
+  if (Clock.getValidation () == true)
+    Serial.println ("Memory content is valid.");
+  else
+    Serial.println ("Memory content was recently lost! Please update date and time values.");
+    
   // Configure trickle carger (250 ohms with one series diode)
   Clock.setTrickleChargerMode (DS1390_TCH_250_D);
 
-  // Get trickle charger register value to confirm configuration
-  Serial.printf ("TCH: %2X \n", Clock.getTrickleChargerMode ());    
-
   // Set time format - 24h
-  Clock.setTimeFormat(DS1390_FORMAT_24H);
+  //Clock.setTimeFormat(DS1390_FORMAT_24H);
   
   // Get current format to confirm configuration
   if (Clock.getTimeFormat() == DS1390_FORMAT_24H)
@@ -76,8 +79,7 @@ void setup()
 //  Clock.setDateTimeDay (Time.Day);
 //  Clock.setDateTimeMonth (Time.Month);
 //  Clock.setDateTimeYear (Time.Year);
-//  Clock.setDateTimeAmPm (Time.AmPm);
-//  Clock.setDateTimeCentury (Time.Century);   
+//  Clock.setDateTimeAmPm (Time.AmPm);  
 }
 
 /* ------------------------------------------------------------------------------------------- */
@@ -87,7 +89,7 @@ void setup()
 void loop()
 { 
   // Read all time registers at once
-  //Clock.getDateTimeAll (Time);
+//  Clock.getDateTimeAll (Time);
 
   // Read each register individually
   //Time.Hsecond = Clock.getDateTimeHSeconds (); 
@@ -99,7 +101,6 @@ void loop()
   Time.Month = Clock.getDateTimeMonth ();
   Time.Year = Clock.getDateTimeYear ();
   //Time.AmPm = Clock.getDateTimeAmPm ();
-  //Time.Century = Clock.getDateTimeCentury (); 
 
   switch (Time.Wday)
   {
@@ -127,8 +128,6 @@ void loop()
   }
 
   Serial.printf ("%02d/%02d/20%02d - %02d:%02d:%02d \n", Time.Day, Time.Month, Time.Year, Time.Hour, Time.Minute, Time.Second);
-  
-  //Serial.printf ("%02d/%02d/2%d%02d - %02d:%02d:%02d.%02d \n", Time.Day, Time.Month, Time.Century, Time.Year, Time.Hour, Time.Minute, Time.Second, Time.Hsecond);
   //Serial.printf ("AM/PM: %d \n", Time.AmPm);
   
   delay (1000);

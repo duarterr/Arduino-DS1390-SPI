@@ -1,20 +1,29 @@
 /* ------------------------------------------------------------------------------------------- */
 // DS1390 - Library for interfacing the DS1390 RTC using SPI
-// Version: 1.0
+// Version: 1.1
 // Author:  Renan R. Duarte
 // E-mail:  duarte.renan@hotmail.com
-// Date:    October 9, 2019
+// Date:    October 10, 2019
 //
-// Notes:   A 200ms (min) delay is required after boot to read/write device memory 
-//          Works with DS1391 aswell.
-//			Alarm-related functions not implemented yet
+// Notes:   - This library uses the Century bit of the Month register as a way to check if the 
+//			memory contents are valid. When date or time registers are written, this bit is set
+// 			to 1. This bit is used to check if the device memory was lost since last time the
+//			registers were written (this bit is reseted to 0 when Vcc and Vbackup are lost).
+//			- As a consequence, this library does not support years higher than 99.
+//			- A 200ms (min) delay is required after boot to read/write device memory. 
+//          - Works with DS1391 aswell.
+//			- Alarm-related functions not implemented yet
 //          
 // Knwon bugs:  - In 12h format, the device do not change the AM/PM bit neither increments
 //              the day of the week and day counters. Everything works in 24h mode
 //
 //              - Reading Hundredths of Seconds too often makes the device loose accuracy
 //
+// Changelog:	v1.0 - 09/10/2019 - First release
+//				v1.1 - 10/10/2019 - Century bit is now used for validation 
+//
 // Released into the public domain
+/* ------------------------------------------------------------------------------------------- */
 /* ------------------------------------------------------------------------------------------- */
 
 #ifndef DS1390_SPI_h
@@ -92,7 +101,6 @@
 #define DS1390_MASK_CENTURY     0x80  // Century bit
 #define DS1390_MASK_AMX         0x80  // Alarm  bit (x = 1-4)
 #define DS1390_MASK_DYDT        0x40  // Alarm day/date bit
-// TODO maks of Control and status registers
 
 /* ------------------------------------------------------------------------------------------- */
 // Structures
@@ -109,7 +117,6 @@ typedef struct
   unsigned char Day = 0;      // Day
   unsigned char Month = 0;    // Month/Century
   unsigned char Year = 0;     // Year
-  unsigned char Century = 0;  // Century - Logic 0 if year <= 99 or logic if year > 99
   unsigned char AmPm = 0;     // AmPm flag - This field is set to 0 if 24h format is active
   
 } DS1390DateTime;
@@ -128,10 +135,14 @@ class DS1390
     // Time format related functions
     unsigned char getTimeFormat ();
     bool setTimeFormat (unsigned char Format);
+	
+	// Data validation related functions
+	bool getValidation ();
+    void setValidation (bool Value); 
 
     // Date and time related functions
-    bool getDateTimeAll(DS1390DateTime &DateTime);
-    bool setDateTimeAll(DS1390DateTime &DateTime);
+    void getDateTimeAll(DS1390DateTime &DateTime);
+    void setDateTimeAll(DS1390DateTime &DateTime);
     unsigned char getDateTimeHSeconds ();
     void setDateTimeHSeconds (unsigned char Value);    
     unsigned char getDateTimeSeconds ();
@@ -150,8 +161,6 @@ class DS1390
     bool setDateTimeYear (unsigned char Value);     
     unsigned char getDateTimeAmPm ();
     bool setDateTimeAmPm (unsigned char Value);     
-    unsigned char getDateTimeCentury ();
-    bool setDateTimeCentury (unsigned char Value); 
                     
     // Trickle charger related functions
     unsigned char getTrickleChargerMode ();

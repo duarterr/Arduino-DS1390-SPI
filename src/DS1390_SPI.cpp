@@ -1,18 +1,26 @@
 /* ------------------------------------------------------------------------------------------- */
 // DS1390 - Library for interfacing the DS1390 RTC using SPI
-// Version: 1.0
+// Version: 1.1
 // Author:  Renan R. Duarte
 // E-mail:  duarte.renan@hotmail.com
-// Date:    October 9, 2019
+// Date:    October 10, 2019
 //
-// Notes:   A 200ms (min) delay is required after boot to read/write device memory 
-//          Works with DS1391 aswell.
-//			Alarm-related functions not implemented yet
+// Notes:   - This library uses the Century bit of the Month register as a way to check if the 
+//			memory contents are valid. When date or time registers are written, this bit is set
+// 			to 1. This bit is used to check if the device memory was lost since last time the
+//			registers were written (this bit is reseted to 0 when Vcc and Vbackup are lost).
+//			- As a consequence, this library does not support years higher than 99.
+//			- A 200ms (min) delay is required after boot to read/write device memory. 
+//          - Works with DS1391 aswell.
+//			- Alarm-related functions not implemented yet
 //          
 // Knwon bugs:  - In 12h format, the device do not change the AM/PM bit neither increments
 //              the day of the week and day counters. Everything works in 24h mode
 //
 //              - Reading Hundredths of Seconds too often makes the device loose accuracy
+//
+// Changelog:	v1.0 - 09/10/2019 - First release
+//				v1.1 - 10/10/2019 - Century bit is now used for validation 
 //
 // Released into the public domain
 /* ------------------------------------------------------------------------------------------- */
@@ -135,6 +143,35 @@ unsigned char DS1390::readByte (unsigned char Address)
 
 /* ------------------------------------------------------------------------------------------- */
 
+// Name:        getValidation
+// Description: Gets the validation bit (century) from DS1390 memory
+// Arguments:   None
+// Returns:     false if memory content was recently lost or true otherwise
+
+bool DS1390::getValidation ()
+{
+  // Return validation flag
+  if (((readByte(DS1390_ADDR_READ_MON) & DS1390_MASK_CENTURY) >> 7) == 1)
+	return true;
+  else
+	return false;
+}
+
+/* ------------------------------------------------------------------------------------------- */
+
+// Name:        setValidation
+// Description: Sets the validation bit (century) in DS1390 memory
+// Arguments:   Validation bit value - 0 or 1
+// Returns:     none
+
+void DS1390::setValidation (bool Value)
+{
+  // Send value to DS1390
+  writeByte (DS1390_ADDR_WRITE_MON, (dec2bcd(getDateTimeMonth()) | (Value << 7)));
+} 
+
+/* ------------------------------------------------------------------------------------------- */
+
 // Name:        getTimeFormat
 // Description: Gets the current time format (12h/24h) from DS1390 memory
 // Arguments:   None
@@ -174,6 +211,9 @@ bool DS1390::setTimeFormat (unsigned char Format)
 
   // Send new Hours register
   writeByte (DS1390_ADDR_WRITE_HRS, HrsReg);
+  
+  // Set validation bit
+  setValidation (true);
 
   // Success
   return true;
@@ -184,10 +224,9 @@ bool DS1390::setTimeFormat (unsigned char Format)
 // Name:        getDateTimeAll
 // Description: Gets all time related register values from DS1390 memory
 // Arguments:   DateTime - DS1390DateTime structure to store the data
-// Returns:     false on error or true on completion
+// Returns:     None
 
-// TODO valores de retorno
-bool DS1390::getDateTimeAll(DS1390DateTime &DateTime)
+void DS1390::getDateTimeAll(DS1390DateTime &DateTime)
 {
   // Struck to store raw read data
   DS1390DateTime Buffer;
@@ -239,9 +278,6 @@ bool DS1390::getDateTimeAll(DS1390DateTime &DateTime)
   DateTime.Day = bcd2dec(Buffer.Day);
   DateTime.Month = bcd2dec(Buffer.Month & 0x1F); // Ignore Century bit
   DateTime.Year = bcd2dec(Buffer.Year);
-  DateTime.Century = ((Buffer.Month & DS1390_MASK_CENTURY) >> 7);
-
-  return true;
 }
 
 /* ------------------------------------------------------------------------------------------- */
@@ -249,9 +285,9 @@ bool DS1390::getDateTimeAll(DS1390DateTime &DateTime)
 // Name:        setDateTimeAll
 // Description: Sets all time related register values in DS1390 memory
 // Arguments:   DateTime - DS1390DateTime structure with the data to be written
-// Returns:     false on error or true on completion
+// Returns:     None
 
-bool DS1390::setDateTimeAll(DS1390DateTime &DateTime)
+void DS1390::setDateTimeAll(DS1390DateTime &DateTime)
 {
   // Struck to store raw data to be written
   DS1390DateTime Buffer;  
@@ -272,8 +308,8 @@ bool DS1390::setDateTimeAll(DS1390DateTime &DateTime)
   else
     Buffer.Hour = dec2bcd(constrain(DateTime.Hour, 1, 12)) | (DateTime.AmPm << 5) | DS1390_MASK_FORMAT;  
 
-  // Store Century info in Century bit of Month register
-  Buffer.Month = dec2bcd(constrain(DateTime.Month, 1, 12)) | (DateTime.Century << 7);  
+  // Set validation bit
+  Buffer.Month = dec2bcd(constrain(DateTime.Month, 1, 12)) | DS1390_MASK_CENTURY;  
 
   // Configure SPI transaction  
   SPI.beginTransaction(SPISettings(DS1390_SPI_CLOCK, MSBFIRST, SPI_MODE1));
@@ -299,9 +335,6 @@ bool DS1390::setDateTimeAll(DS1390DateTime &DateTime)
 
   // End SPI transaction
   SPI.endTransaction(); 
-
-  // Success
-  return true;
 }
 
 /* ------------------------------------------------------------------------------------------- */
@@ -327,7 +360,10 @@ unsigned char DS1390::getDateTimeHSeconds ()
 void DS1390::setDateTimeHSeconds (unsigned char Value)
 {
   // Constrain value within allowed limits and send to DS1390
-  writeByte (DS1390_ADDR_WRITE_HSEC, dec2bcd(constrain(Value, 0, 99)));  
+  writeByte (DS1390_ADDR_WRITE_HSEC, dec2bcd(constrain(Value, 0, 99))); 
+
+  // Set validation bit
+  setValidation (true);  
 }
 
 /* ------------------------------------------------------------------------------------------- */
@@ -358,6 +394,9 @@ bool DS1390::setDateTimeSeconds (unsigned char Value)
       
   // Constrain value within allowed limits and send to DS1390
   writeByte (DS1390_ADDR_WRITE_SEC, dec2bcd(constrain(Value, 0, 59)));  
+  
+  // Set validation bit
+  setValidation (true);  
 
   // Success
   return true;  
@@ -391,6 +430,9 @@ bool DS1390::setDateTimeMinutes (unsigned char Value)
       
   // Constrain value within allowed limits and send to DS1390
   writeByte (DS1390_ADDR_WRITE_MIN, dec2bcd(constrain(Value, 0, 59)));
+  
+  // Set validation bit
+  setValidation (true);  
 
   // Success
   return true;    
@@ -446,6 +488,9 @@ bool DS1390::setDateTimeHours (unsigned char Value)
       
   // Send value to DS1390
   writeByte (DS1390_ADDR_WRITE_HRS, Value);  
+  
+  // Set validation bit
+  setValidation (true);  
 
   // Success
   return true;  
@@ -479,6 +524,9 @@ bool DS1390::setDateTimeWday (unsigned char Value)
       
   // Constrain value within allowed limits and send to DS1390
   writeByte (DS1390_ADDR_WRITE_WDAY, dec2bcd(constrain(Value, 0, 7))); 
+  
+  // Set validation bit
+  setValidation (true);  
 
   // Success
   return true;   
@@ -512,6 +560,9 @@ bool DS1390::setDateTimeDay (unsigned char Value)
       
   // Constrain value within allowed limits and send to DS1390
   writeByte (DS1390_ADDR_WRITE_DAY, dec2bcd(constrain(Value, 0, 31)));
+  
+  // Set validation bit
+  setValidation (true);  
 
   // Success
   return true;    
@@ -543,11 +594,8 @@ bool DS1390::setDateTimeMonth (unsigned char Value)
   if (Value == getDateTimeMonth())
     return false;
 
-  // Century flag
-  unsigned char Century = ((readByte(DS1390_ADDR_READ_MON) & DS1390_MASK_CENTURY) >> 7);
-  
-  // Store Century info in Century bit of Month register
-  Value = dec2bcd(constrain(Value, 1, 12)) | (Century << 7);  
+  // Constrain value within allowed limits, set validation bit and send to DS1390
+  Value = dec2bcd(constrain(Value, 1, 12)) | DS1390_MASK_CENTURY;  
 
   // Send value to DS1390
   writeByte (DS1390_ADDR_WRITE_MON, Value);  
@@ -585,6 +633,9 @@ bool DS1390::setDateTimeYear (unsigned char Value)
   // Constrain value within allowed limits and send to DS1390
   writeByte (DS1390_ADDR_WRITE_YRS, dec2bcd(constrain(Value, 0, 99)));  
 
+  // Set validation bit
+  setValidation (true);
+  
   // Success
   return true;  
 }  
@@ -631,47 +682,14 @@ bool DS1390::setDateTimeAmPm (unsigned char Value)
   unsigned char BufferHrs = dec2bcd(getDateTimeHours()) | (Value << 5) | DS1390_MASK_FORMAT;
 
   // Send value to DS1390
-  writeByte (DS1390_ADDR_WRITE_HRS, BufferHrs);     
-
-  // Success
-  return true;  
-}  
-
-/* ------------------------------------------------------------------------------------------- */
-
-// Name:        getDateTimeCentury
-// Description: Gets century flag from DS1390 memory
-// Arguments:   None
-// Returns:     Century
-
-unsigned char DS1390::getDateTimeCentury ()
-{
-  // Return century flag
-  return ((readByte(DS1390_ADDR_READ_MON) & DS1390_MASK_CENTURY) >> 7);
-}
-
-/* ------------------------------------------------------------------------------------------- */
-
-// Name:        setDateTimeCentury
-// Description: Sets century flag in DS1390 memory
-// Arguments:   Century (constrained between 0 and 1)
-// Returns:     false if new value is equal to current or true on completion
-
-bool DS1390::setDateTimeCentury (unsigned char Value)
-{
-  // Check if new value is equal to current
-  if (Value == getDateTimeCentury())
-    return false;
-
-  // Get current month 
-  unsigned char BufferMonth = getDateTimeMonth();
-
-  // Constrain value within allowed limits and send to DS1390
-  writeByte (DS1390_ADDR_WRITE_MON, (dec2bcd(getDateTimeMonth()) | (constrain(Value, 0, 1) << 7)));
+  writeByte (DS1390_ADDR_WRITE_HRS, BufferHrs);
   
+  // Set validation bit
+  setValidation (true);  
+
   // Success
   return true;  
-}     
+}    
 
 /* ------------------------------------------------------------------------------------------- */
 
@@ -719,6 +737,9 @@ bool DS1390::setTrickleChargerMode (unsigned char Mode)
 
   // Send new configuration byte
   writeByte (DS1390_ADDR_WRITE_TCH, Mode);
+  
+  // Set validation bit
+  setValidation (true);  
   
   // Success
   return true;  

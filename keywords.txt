@@ -9,10 +9,13 @@ DS1390	KEYWORD1
 #######################################
 
 getTimeFormat	KEYWORD2
+setTimeFormat	KEYWORD2
+getValidation	KEYWORD2 
+setValidation	KEYWORD2 
 getDateTimeAll	KEYWORD2
 setDateTimeAll	KEYWORD2
 getDateTimeHSeconds	KEYWORD2 
-void setDateTimeHSeconds	KEYWORD2 
+setDateTimeHSeconds	KEYWORD2 
 getDateTimeSeconds	KEYWORD2 
 setDateTimeSeconds	KEYWORD2 
 getDateTimeMinutes	KEYWORD2 
@@ -28,9 +31,7 @@ setDateTimeMonth	KEYWORD2
 getDateTimeYear	KEYWORD2 
 setDateTimeYear	KEYWORD2  
 getDateTimeAmPm	KEYWORD2 
-setDateTimeAmPm	KEYWORD2  
-getDateTimeCentury	KEYWORD2 
-setDateTimeCentury	KEYWORD2  
+setDateTimeAmPm	KEYWORD2   
 getTrickleChargerMode	KEYWORD2 
 setTrickleChargerMode	KEYWORD2
 	
@@ -49,3 +50,9 @@ DS1390_FORMAT_24H	LITERAL1
 DS1390_FORMAT_12H	LITERAL1
 DS1390_AM	LITERAL1
 DS1390_PM	LITERAL1
+
+######################################
+# Structures (KEYWORD3)
+#######################################
+
+DS1390DateTime	KEYWORD3

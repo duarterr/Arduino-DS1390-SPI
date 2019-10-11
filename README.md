@@ -8,6 +8,8 @@ All parameters that can be passed as arguments to functions expect to receive va
 
 ## Notes
 
+This library uses the Century bit of the Month register as a way to check if the memory contents are valid. When date or time registers are written, this bit is set to 1. This bit is used to check if the device memory was lost since last time the registers were written (this bit is reseted to 0 when Vcc and Vbackup are lost).
+
 A 200ms (min) delay is required after boot to read/write device memory (tRST).
 
 Works with DS1391 aswell.
