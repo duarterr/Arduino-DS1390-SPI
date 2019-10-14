@@ -6,22 +6,23 @@
 // Date:    October 14, 2019
 //
 // Notes:   - This library uses the Century bit of the Month register as a way to check if the
-//			memory contents are valid. When date or time registers are written, this bit is set
-// 			to 1. This bit is used to check if the device memory was lost since last time the
-//			registers were written (this bit is reseted to 0 when Vcc and Vbackup are lost).
-//			- As a consequence, this library does not support years higher than 99.
-//			- A 200ms (min) delay is required after boot to read/write device memory.
-//          - Works with DS1391 aswell.
-//			- Alarm-related functions not implemented yet
+//      	memory contents are valid. When date or time registers are written, this bit is set
+//      	to 1. This bit is used to check if the device memory was lost since last time the
+//      	registers were written (this bit is reseted to 0 when Vcc and Vbackup are lost).
+//      	- As a consequence, this library does not support years higher than 99.
+//      	- A 200ms (min) delay is required after boot to read/write device memory.
+//      	- Epoch related functions assume year is higher than 2000.
+//      	- Works with DS1391 aswell.
+//      	- Alarm-related functions not implemented yet
 //
 // Knwon bugs:  - In 12h format, the device do not change the AM/PM bit neither increments
 //              the day of the week and day counters. Everything works in 24h mode
 //
 //              - Reading Hundredths of Seconds too often makes the device loose accuracy
 //
-// Changelog:	v1.0 - 09/10/2019 - First release
-//				v1.1 - 10/10/2019 - Century bit is now used for validation
-//				v1.2 - 14/10/2019 - Bug fixes and Unix timestamp related functions
+// Changelog: 	v1.0 - 09/10/2019 - First release
+//        		v1.1 - 10/10/2019 - Century bit is now used for validation
+//        		v1.2 - 14/10/2019 - Bug fixes and Epoch timestamp related functions
 //
 // Released into the public domain
 /* ------------------------------------------------------------------------------------------- */
@@ -748,21 +749,21 @@ bool DS1390::setTrickleChargerMode (unsigned char Mode)
 
 /* ------------------------------------------------------------------------------------------- */
 
-// Name:        DateTimeToUnix
-// Description: Converts DS1390DateTime structure to Unix timestamp - Ignores hundredths of sec.
+// Name:        DateTimeToEpoch
+// Description: Converts DS1390DateTime structure to Epoch timestamp - Ignores hundredths of sec.
 // Arguments:   DateTime - DS1390DateTime structure with the data
 //				      Timezone - Timezone info (-12 to +12, 0 = GMT) of DateTime
-// Returns:     Unix timestamp referred to Timezone
+// Returns:     Epoch timestamp referred to Timezone
 
-unsigned long DS1390::DateTimeToUnix (DS1390DateTime &DateTime, int Timezone)
+unsigned long DS1390::DateTimeToEpoch (DS1390DateTime &DateTime, int Timezone)
 {
   // Seconds since 00:00:00 - Jan 1, 1970 GMT
-  double Unix = 0;
+  double Epoch = 0;
 
   // Counter
   unsigned int Counter = 0;
 
-  // Unix time starts in 1970 - Assumes current time is after 2000
+  // Epoch time starts in 1970 - Assumes current time is after 2000
   DateTime.Year += 30;
 
   // 12h mode
@@ -773,17 +774,17 @@ unsigned long DS1390::DateTimeToUnix (DS1390DateTime &DateTime, int Timezone)
   if (Timezone != 0)
   {
     long Correction = (constrain(Timezone, -12, 12) * -3600);
-    Unix += Correction; 
+    Epoch += Correction; 
   }
   
   // Seconds from 1970 until 1 jan 00:00:00 of the given year
-  Unix += DateTime.Year * (86400 * 365); // 31536000 seconds per year
+  Epoch += DateTime.Year * (86400 * 365); // 31536000 seconds per year
 
   // Add extra days for leap years
   for (Counter = 0; Counter < DateTime.Year; Counter++)
   {
     if (LEAP_YEAR(Counter))
-      Unix += 86400;
+      Epoch += 86400;
   }
 
   // Add days for given year - Months start from 1
@@ -791,35 +792,35 @@ unsigned long DS1390::DateTimeToUnix (DS1390DateTime &DateTime, int Timezone)
   {
     // February - Leap year
     if ((Counter == 2) && LEAP_YEAR(DateTime.Year))
-      Unix += (86400 * 29); // 29 days
+      Epoch += (86400 * 29); // 29 days
     
     else
-      Unix += 86400 * _MonthDuration[Counter - 1];
+      Epoch += 86400 * _MonthDuration[Counter - 1];
   }
 
   // Add days for given month
-  Unix += (DateTime.Day - 1) * 86400; // 86400 seconds per day
-  Unix += DateTime.Hour * 3600;	// 3600 seconds per hour
-  Unix += DateTime.Minute * 60; // 60 seconds per minute
-  Unix += DateTime.Second;
+  Epoch += (DateTime.Day - 1) * 86400; // 86400 seconds per day
+  Epoch += DateTime.Hour * 3600;	// 3600 seconds per hour
+  Epoch += DateTime.Minute * 60; // 60 seconds per minute
+  Epoch += DateTime.Second;
 
   // Return seconds
-  return Unix;
+  return Epoch;
 }
 
 /* ------------------------------------------------------------------------------------------- */
 
-// Name:        UnixToDateTime
-// Description: Converts Unix timestamp to DS1390DateTime structure - Ignores hundredths of sec.
-// Arguments:   Unix - Unix timestamp
+// Name:        EpochToDateTime
+// Description: Converts Epoch timestamp to DS1390DateTime structure - Ignores hundredths of sec.
+// Arguments:   Epoch - Epoch timestamp
 //				      DateTime - DS1390DateTime structure to store the data
-//				      Timezone - Timezone info (-12 to +12, 0 = GMT) of Unix
+//				      Timezone - Timezone info (-12 to +12, 0 = GMT) of Epoch
 // Returns:     None
 
-void DS1390::UnixToDateTime (unsigned long Unix, DS1390DateTime &DateTime, int Timezone)
+void DS1390::EpochToDateTime (unsigned long Epoch, DS1390DateTime &DateTime, int Timezone)
 {
   // Variables
-  unsigned long UnixTime = Unix;
+  unsigned long EpochTime = Epoch;
   unsigned char Year = 0;
   unsigned char Month = 0;
   unsigned char MonthLength = 0;
@@ -827,22 +828,22 @@ void DS1390::UnixToDateTime (unsigned long Unix, DS1390DateTime &DateTime, int T
 
   // Correct value for given timezone
   if (Timezone != 0)
-    UnixTime += (Timezone * 3600);
+    EpochTime += (Timezone * 3600);
   
   // Calculate seconds
-  DateTime.Second = UnixTime % 60;
+  DateTime.Second = EpochTime % 60;
 
   // Get remaining time in minutes
-  UnixTime /= 60;
+  EpochTime /= 60;
 
   // Calculate minutes
-  DateTime.Minute = UnixTime % 60;
+  DateTime.Minute = EpochTime % 60;
 
   // Get remaining time in hours
-  UnixTime /= 60;
+  EpochTime /= 60;
 
   // Calculate hours
-  DateTime.Hour = UnixTime % 24;
+  DateTime.Hour = EpochTime % 24;
 
   // 12h format
   if (getTimeFormat() == DS1390_FORMAT_12H)
@@ -876,13 +877,13 @@ void DS1390::UnixToDateTime (unsigned long Unix, DS1390DateTime &DateTime, int T
   }
 
   // Get remaining time in days
-  UnixTime /= 24;
+  EpochTime /= 24;
 
   // Get weekday
-  DateTime.Wday = ((UnixTime + 4) % 7) + 1;  // Sunday is day 1 
+  DateTime.Wday = ((EpochTime + 4) % 7) + 1;  // Sunday is day 1 
 
   // Calculate years since 1970
-  while((unsigned)(Days += (LEAP_YEAR(Year) ? 366 : 365)) <= UnixTime) 
+  while((unsigned)(Days += (LEAP_YEAR(Year) ? 366 : 365)) <= EpochTime) 
     Year++;
 
   // Get absolute value
@@ -891,7 +892,7 @@ void DS1390::UnixToDateTime (unsigned long Unix, DS1390DateTime &DateTime, int T
   Days -= LEAP_YEAR(Year) ? 366 : 365;
 
   // Get remaining time in days since Jan 1 of the given year
-  UnixTime -= Days;
+  EpochTime -= Days;
 
   // Calculate month duration
   for (Month = 0; Month < 12; Month++) 
@@ -909,8 +910,8 @@ void DS1390::UnixToDateTime (unsigned long Unix, DS1390DateTime &DateTime, int T
     else 
       MonthLength = _MonthDuration [Month];
     
-    if (UnixTime >= MonthLength) 
-      UnixTime -= MonthLength;
+    if (EpochTime >= MonthLength) 
+      EpochTime -= MonthLength;
     
     else 
       break;
@@ -920,7 +921,40 @@ void DS1390::UnixToDateTime (unsigned long Unix, DS1390DateTime &DateTime, int T
   DateTime.Month = Month + 1;
 
   // Calculate day
-  DateTime.Day = UnixTime + 1; 
+  DateTime.Day = EpochTime + 1; 
+}
+
+/* ------------------------------------------------------------------------------------------- */
+
+// Name:        getDateTimeEpoch
+// Description: Gets all time related register values from DS1390 memory in Epoch format
+// Arguments:   Timezone - Timezone info (-12 to +12, 0 = GMT) to calculate Epoch
+// Returns:     Epoch timestamp
+
+unsigned long DS1390::getDateTimeEpoch (int Timezone)
+{
+	// Get date and time from DS1390 memory
+	getDateTimeAll(_DateTimeBuffer);
+	
+	// Convert to Epoch format and return result
+	return DateTimeToEpoch (_DateTimeBuffer, Timezone);
+}
+
+/* ------------------------------------------------------------------------------------------- */
+
+// Name:        setDateTimeEpoch
+// Description: Sets all time related register values in DS1390 memory from an Epoch timestamp
+// Arguments:   Epoch - Epoch timestamp
+//				      Timezone - Timezone info (-12 to +12, 0 = GMT) of Epoch
+// Returns:     None
+
+void DS1390::setDateTimeEpoch(unsigned long Epoch, int Timezone)
+{
+	// Convert Epoch to DateTime
+	EpochToDateTime (Epoch, _DateTimeBuffer, Timezone);
+	
+	// Write data to DS1390
+	setDateTimeAll(_DateTimeBuffer);
 }
 
 /* ------------------------------------------------------------------------------------------- */

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------------------------------- */
-// Basic - This example sets and gets DS1390 registers using a DateTime structure
+// ESP_NTPCompare - This example compares DS1390 registers with date and time info from the web
 // Author:  Renan R. Duarte
 // E-mail:  duarte.renan@hotmail.com
 // Date:    October 14, 2019
@@ -13,6 +13,10 @@
 
 #include "DS1390_SPI.h" // https://github.com/duarterr/Arduino-DS1390-SPI
 
+#include <NTPClient.h>
+#include <ESP8266WiFi.h>
+#include <WiFiUdp.h>
+
 /* ------------------------------------------------------------------------------------------- */
 // Hardware defines
 /* ------------------------------------------------------------------------------------------- */
@@ -21,18 +25,35 @@
 #define PIN_RTC_CS               10
 
 /* ------------------------------------------------------------------------------------------- */
+// Software defines
+/* ------------------------------------------------------------------------------------------- */
+
+// WiFi settings
+const char *ssid     = "ssid";
+const char *password = "psw";
+
+// Timezone (-12 +12)
+#define TIMEZONE                 -3
+
+/* ------------------------------------------------------------------------------------------- */
 // Constructor
 /* ------------------------------------------------------------------------------------------- */
 
 // RTC constructor
 DS1390 Clock (PIN_RTC_CS);
 
+// Date and time struct - From DS1390 library
+DS1390DateTime Time;
+
+// UDP
+WiFiUDP UDP;
+
+// NTP client - Result is given by server closest to you, so it's usually in your timezone
+NTPClient NTP(UDP, "0.br.pool.ntp.org"); // Brazilian server
+
 /* ------------------------------------------------------------------------------------------- */
 // Variables
 /* ------------------------------------------------------------------------------------------- */
-
-// Date and time struct - From DS1390 library
-DS1390DateTime Time;
 
 /* ------------------------------------------------------------------------------------------- */
 // Initialization function
@@ -72,32 +93,22 @@ void setup()
   else
     Serial.println ("Format: 12h");
 
-  // Define time structure - 01:02:03 - 01/02/2003 - Saturday
-  Time.Hsecond = 0;
-  Time.Second = 3;
-  Time.Minute = 2;
-  Time.Hour = 1;
-  // Time.AmPm = DS1390_PM; // Not used in 24h format
-  Time.Wday = 7;
-  Time.Day = 1;
-  Time.Month = 2;
-  Time.Year = 3;
-  
-  // Set all date and time registers at once
-  Clock.setDateTimeAll (Time);
+  // Start wifi
+  WiFi.begin(ssid, password);
 
-  // OR
+  // Wait for connection
+  Serial.printf ("Connecting to WiFi");
+  while ( WiFi.status() != WL_CONNECTED ) 
+  {
+    delay ( 500 );
+    Serial.print ( "." );
+  }
+  Serial.println();
+  Serial.println ("Done.");
+  Serial.println();
 
-//  // Set each register individually
-//  Clock.setDateTimeHSeconds (Time.Hsecond); 
-//  Clock.setDateTimeSeconds (Time.Second);
-//  Clock.setDateTimeMinutes (Time.Minute);  
-//  Clock.setDateTimeHours (Time.Hour);      
-//  Clock.setDateTimeWday (Time.Wday);
-//  Clock.setDateTimeDay (Time.Day);
-//  Clock.setDateTimeMonth (Time.Month);
-//  Clock.setDateTimeYear (Time.Year);
-//  Clock.setDateTimeAmPm (Time.AmPm);  
+  // Start NTP client
+  NTP.begin();     
 }
 
 /* ------------------------------------------------------------------------------------------- */
@@ -106,24 +117,14 @@ void setup()
 
 void loop()
 { 
-//  // Read all time registers at once
-//  Clock.getDateTimeAll (Time);
+  // Read DS1390 registers
+  unsigned long Epoch = Clock.getDateTimeEpoch (TIMEZONE);
 
-  // OR
-
-  // Read each register individually
-  //Time.Hsecond = Clock.getDateTimeHSeconds (); 
-  Time.Second = Clock.getDateTimeSeconds ();
-  Time.Minute = Clock.getDateTimeMinutes ();  
-  Time.Hour = Clock.getDateTimeHours ();      
-  Time.Wday = Clock.getDateTimeWday ();
-  Time.Day = Clock.getDateTimeDay ();
-  Time.Month = Clock.getDateTimeMonth ();
-  Time.Year = Clock.getDateTimeYear ();
-  //Time.AmPm = Clock.getDateTimeAmPm ();
-
+  // Convert Epoch to DateTime - Not necessary. Values can be obtained directly using Clock.getDateTimeAll (Time); 
+  Clock.EpochToDateTime (Epoch, Time, TIMEZONE);
+  
   // Display result
-  Serial.printf ("DateTime: ");
+  Serial.println ("DS1390: ");
   
   switch (Time.Wday)
   {
@@ -151,7 +152,47 @@ void loop()
   }
 
   Serial.printf ("%02d/%02d/20%02d - %02d:%02d:%02d \n", Time.Day, Time.Month, Time.Year, Time.Hour, Time.Minute, Time.Second);
-  //Serial.printf ("AM/PM: %d \n", Time.AmPm); // Not used
+  //Serial.printf ("AM/PM: %d \n", Time.AmPm);
+
+  Serial.printf ("Epoch: %d \n", Epoch);  
+
+  // Get NTP time
+  NTP.update();
+
+  // Display result
+  Serial.println ("NTP: ");
+
+  Clock.EpochToDateTime (NTP.getEpochTime(), Time, TIMEZONE);
+
+  switch (Time.Wday)
+  {
+    case 1:
+      Serial.printf ("Sun, ");
+      break;
+    case 2:
+      Serial.printf ("Mon, "); 
+      break;
+    case 3:
+      Serial.printf ("Tue, "); 
+      break;
+    case 4:
+      Serial.printf ("Wed, ");
+      break; 
+    case 5:
+      Serial.printf ("Thu, ");
+      break;
+    case 6:
+      Serial.printf ("Fry, "); 
+      break; 
+    case 7:
+      Serial.printf ("Sat, ");
+      break;                               
+  }
+
+  Serial.printf ("%02d/%02d/20%02d - %02d:%02d:%02d \n", Time.Day, Time.Month, Time.Year, Time.Hour, Time.Minute, Time.Second);
+  //Serial.printf ("AM/PM: %d \n", Time.AmPm);
+
+  Serial.printf ("Epoch: %d \n\n", NTP.getEpochTime());    
 
   delay (1000);
 }

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------------------------------- */
-// Basic - This example sets and gets DS1390 registers using a DateTime structure
+// Basic - This example sets and gets DS1390 registers using an Epoch timestamp
 // Author:  Renan R. Duarte
 // E-mail:  duarte.renan@hotmail.com
 // Date:    October 14, 2019
@@ -12,6 +12,13 @@
 /* ------------------------------------------------------------------------------------------- */
 
 #include "DS1390_SPI.h" // https://github.com/duarterr/Arduino-DS1390-SPI
+
+/* ------------------------------------------------------------------------------------------- */
+// Software defines
+/* ------------------------------------------------------------------------------------------- */
+
+// Timezone (-12 +12)
+#define TIMEZONE                -3
 
 /* ------------------------------------------------------------------------------------------- */
 // Hardware defines
@@ -33,6 +40,9 @@ DS1390 Clock (PIN_RTC_CS);
 
 // Date and time struct - From DS1390 library
 DS1390DateTime Time;
+
+// Epoch timestamp
+unsigned long Epoch = 0;
 
 /* ------------------------------------------------------------------------------------------- */
 // Initialization function
@@ -72,32 +82,10 @@ void setup()
   else
     Serial.println ("Format: 12h");
 
-  // Define time structure - 01:02:03 - 01/02/2003 - Saturday
-  Time.Hsecond = 0;
-  Time.Second = 3;
-  Time.Minute = 2;
-  Time.Hour = 1;
-  // Time.AmPm = DS1390_PM; // Not used in 24h format
-  Time.Wday = 7;
-  Time.Day = 1;
-  Time.Month = 2;
-  Time.Year = 3;
-  
-  // Set all date and time registers at once
-  Clock.setDateTimeAll (Time);
+  // Set DS1390 time
+  Epoch = 1044072123; // 01:02:03 - 01/02/2003 - GMT -3
 
-  // OR
-
-//  // Set each register individually
-//  Clock.setDateTimeHSeconds (Time.Hsecond); 
-//  Clock.setDateTimeSeconds (Time.Second);
-//  Clock.setDateTimeMinutes (Time.Minute);  
-//  Clock.setDateTimeHours (Time.Hour);      
-//  Clock.setDateTimeWday (Time.Wday);
-//  Clock.setDateTimeDay (Time.Day);
-//  Clock.setDateTimeMonth (Time.Month);
-//  Clock.setDateTimeYear (Time.Year);
-//  Clock.setDateTimeAmPm (Time.AmPm);  
+  Clock.setDateTimeEpoch (Epoch, TIMEZONE);
 }
 
 /* ------------------------------------------------------------------------------------------- */
@@ -106,21 +94,12 @@ void setup()
 
 void loop()
 { 
-//  // Read all time registers at once
-//  Clock.getDateTimeAll (Time);
+  // Get Epoch time from DS1390
+  unsigned long Epoch = Clock.getDateTimeEpoch (TIMEZONE);
+  Serial.printf ("Epoch: %d \n", Epoch);
 
-  // OR
-
-  // Read each register individually
-  //Time.Hsecond = Clock.getDateTimeHSeconds (); 
-  Time.Second = Clock.getDateTimeSeconds ();
-  Time.Minute = Clock.getDateTimeMinutes ();  
-  Time.Hour = Clock.getDateTimeHours ();      
-  Time.Wday = Clock.getDateTimeWday ();
-  Time.Day = Clock.getDateTimeDay ();
-  Time.Month = Clock.getDateTimeMonth ();
-  Time.Year = Clock.getDateTimeYear ();
-  //Time.AmPm = Clock.getDateTimeAmPm ();
+  // Convert to DateTime
+  Clock.EpochToDateTime (Epoch, Time, TIMEZONE);
 
   // Display result
   Serial.printf ("DateTime: ");
@@ -151,8 +130,8 @@ void loop()
   }
 
   Serial.printf ("%02d/%02d/20%02d - %02d:%02d:%02d \n", Time.Day, Time.Month, Time.Year, Time.Hour, Time.Minute, Time.Second);
-  //Serial.printf ("AM/PM: %d \n", Time.AmPm); // Not used
-
+  //Serial.printf ("AM/PM: %d \n", Time.AmPm);
+  
   delay (1000);
 }
 

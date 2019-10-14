@@ -11,7 +11,8 @@
 //			registers were written (this bit is reseted to 0 when Vcc and Vbackup are lost).
 //			- As a consequence, this library does not support years higher than 99.
 //			- A 200ms (min) delay is required after boot to read/write device memory.
-//          - Works with DS1391 aswell.
+//      	- Epoch related functions assume year is higher than 2000.
+//      	- Works with DS1391 aswell.
 //			- Alarm-related functions not implemented yet
 //
 // Knwon bugs:  - In 12h format, the device do not change the AM/PM bit neither increments
@@ -21,7 +22,7 @@
 //
 // Changelog:	v1.0 - 09/10/2019 - First release
 //				v1.1 - 10/10/2019 - Century bit is now used for validation
-//				v1.2 - 14/10/2019 - Bug fixes and Unix timestamp related functions
+//				v1.2 - 14/10/2019 - Bug fixes and Epoch timestamp related functions
 //
 // Released into the public domain
 /* ------------------------------------------------------------------------------------------- */
@@ -162,19 +163,24 @@ class DS1390
     unsigned char getDateTimeYear ();
     bool setDateTimeYear (unsigned char Value);     
     unsigned char getDateTimeAmPm ();
-    bool setDateTimeAmPm (unsigned char Value);     
+    bool setDateTimeAmPm (unsigned char Value);  
+	unsigned long getDateTimeEpoch (int Timezone);
+	void setDateTimeEpoch(unsigned long Epoch, int Timezone);
                     
     // Trickle charger related functions
     unsigned char getTrickleChargerMode ();
     bool setTrickleChargerMode (unsigned char Mode);
 	
-	// Unix timestamp related functions
-	unsigned long DateTimeToUnix (DS1390DateTime &DateTime, int Timezone);
-	void UnixToDateTime (unsigned long Unix, DS1390DateTime &DateTime, int Timezone);
+	// Epoch timestamp related functions
+	unsigned long DateTimeToEpoch (DS1390DateTime &DateTime, int Timezone);
+	void EpochToDateTime (unsigned long Epoch, DS1390DateTime &DateTime, int Timezone);
 	
   private:  
     // CS pin mask
     unsigned int _PinCs;
+
+    // DateTime buffer
+    DS1390DateTime _DateTimeBuffer;
 
     // Duration of months of the year
     const unsigned char _MonthDuration[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};    

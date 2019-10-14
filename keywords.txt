@@ -14,6 +14,7 @@ getValidation	KEYWORD2
 setValidation	KEYWORD2 
 getDateTimeAll	KEYWORD2
 setDateTimeAll	KEYWORD2
+
 getDateTimeHSeconds	KEYWORD2 
 setDateTimeHSeconds	KEYWORD2 
 getDateTimeSeconds	KEYWORD2 
@@ -32,8 +33,12 @@ getDateTimeYear	KEYWORD2
 setDateTimeYear	KEYWORD2  
 getDateTimeAmPm	KEYWORD2 
 setDateTimeAmPm	KEYWORD2   
+getDateTimeEpoch	KEYWORD2
+setDateTimeEpoch	KEYWORD2
 getTrickleChargerMode	KEYWORD2 
 setTrickleChargerMode	KEYWORD2
+DateTimeToEpoch	KEYWORD2
+EpochToDateTime	KEYWORD2
 	
 ######################################
 # Constants (LITERAL1)
