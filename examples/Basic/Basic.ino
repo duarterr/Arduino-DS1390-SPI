@@ -65,7 +65,6 @@ void setup()
 //  Time.Day = 10;
 //  Time.Month = 10;
 //  Time.Year = 19;
-//  Time.Century = 0;
 //
 //  // Set all date and time registers at once
 //  Clock.setDateTimeAll (Time);
@@ -129,7 +128,40 @@ void loop()
 
   Serial.printf ("%02d/%02d/20%02d - %02d:%02d:%02d \n", Time.Day, Time.Month, Time.Year, Time.Hour, Time.Minute, Time.Second);
   //Serial.printf ("AM/PM: %d \n", Time.AmPm);
-  
+
+  unsigned long Unix = Clock.DateTimeToUnix (Time, -3);
+  Serial.printf ("Unix: %d \n", Unix);
+
+  Clock.UnixToDateTime (Unix, Time, -3);
+
+  switch (Time.Wday)
+  {
+    case 1:
+      Serial.printf ("Sun, ");
+      break;
+    case 2:
+      Serial.printf ("Mon, "); 
+      break;
+    case 3:
+      Serial.printf ("Tue, "); 
+      break;
+    case 4:
+      Serial.printf ("Wed, ");
+      break; 
+    case 5:
+      Serial.printf ("Thu, ");
+      break;
+    case 6:
+      Serial.printf ("Fry, "); 
+      break; 
+    case 7:
+      Serial.printf ("Sat, ");
+      break;                               
+  }
+
+  Serial.printf ("%02d/%02d/20%02d - %02d:%02d:%02d \n", Time.Day, Time.Month, Time.Year, Time.Hour, Time.Minute, Time.Second);
+  //Serial.printf ("AM/PM: %d \n", Time.AmPm);
+
   delay (1000);
 }
 
