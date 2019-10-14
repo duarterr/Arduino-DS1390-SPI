@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------------------------------- */
-// Basic - This example sets and gets DS1390 registers using an Epoch timestamp
+// BasicEpoch - This example sets and gets DS1390 registers using an Epoch timestamp
 // Author:  Renan R. Duarte
 // E-mail:  duarte.renan@hotmail.com
 // Date:    October 14, 2019
