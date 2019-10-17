@@ -1,0 +1,67 @@
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+DS1390	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+getTimeFormat	KEYWORD2
+setTimeFormat	KEYWORD2
+getValidation	KEYWORD2 
+setValidation	KEYWORD2
+
+dateTimeToEpoch	KEYWORD2
+epochToDateTime	KEYWORD2
+ 
+getDateTimeAll	KEYWORD2
+setDateTimeAll	KEYWORD2
+
+getDateTimeHSeconds	KEYWORD2 
+setDateTimeHSeconds	KEYWORD2 
+getDateTimeSeconds	KEYWORD2 
+setDateTimeSeconds	KEYWORD2 
+getDateTimeMinutes	KEYWORD2 
+setDateTimeMinutes	KEYWORD2  
+getDateTimeHours	KEYWORD2 
+setDateTimeHours	KEYWORD2  
+getDateTimeWday	KEYWORD2 
+setDateTimeWday	KEYWORD2  
+getDateTimeDay	KEYWORD2 
+setDateTimeDay	KEYWORD2  
+getDateTimeMonth	KEYWORD2 
+setDateTimeMonth	KEYWORD2  
+getDateTimeYear	KEYWORD2 
+setDateTimeYear	KEYWORD2  
+getDateTimeAmPm	KEYWORD2 
+setDateTimeAmPm	KEYWORD2   
+getDateTimeCentury	KEYWORD2 
+setDateTimeCentury	KEYWORD2
+getDateTimeEpoch	KEYWORD2
+setDateTimeEpoch	KEYWORD2
+getTrickleChargerMode	KEYWORD2 
+setTrickleChargerMode	KEYWORD2
+	
+######################################
+# Constants (LITERAL1)
+#######################################
+
+DS1390_TCH_DISABLE	LITERAL1
+DS1390_TCH_250_NO_D	LITERAL1
+DS1390_TCH_250_D	LITERAL1
+DS1390_TCH_2K_NO_D	LITERAL1
+DS1390_TCH_2K_D	LITERAL1
+DS1390_TCH_4K_NO_D	LITERAL1
+DS1390_TCH_4K_D	LITERAL1
+DS1390_FORMAT_24H	LITERAL1
+DS1390_FORMAT_12H	LITERAL1
+DS1390_AM	LITERAL1
+DS1390_PM	LITERAL1
+
+######################################
+# Structures (KEYWORD3)
+#######################################
+
+DS1390DateTime	KEYWORD3
