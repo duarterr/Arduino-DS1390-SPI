@@ -12,6 +12,8 @@ A 200ms (min) delay is required after boot to read/write device memory (tRST).
 
 Epoch related functions assume year is higher than 2000.
 
+Century and Hundredths of Seconds registers are ignored in Epoch related functions
+
 Works with DS1391 aswell.
 
 Alarm-related functions not implemented yet.
