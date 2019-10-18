@@ -38,6 +38,10 @@
 // Defines
 /* ------------------------------------------------------------------------------------------- */
 
+// Code version
+#define DS1390_CODE_NAME		"DS1390_SPI"
+#define DS1390_CODE_VERSION		"1.3"
+
 // DS1390 SPI clock speed
 #define DS1390_SPI_CLOCK        4000000
 

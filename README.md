@@ -27,11 +27,6 @@ In 12h format, the device do not change the AM/PM bit neither increments the day
 
 Reading Hundredths of Seconds too often makes the device loose accuracy.
 
-## Website
-
-You can find the latest version of the library at
-https://github.com/duarterr/Arduino-DS1390-SPI
-
 ## License
 
 This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.
