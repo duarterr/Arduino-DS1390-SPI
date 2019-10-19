@@ -29,8 +29,8 @@
 /* ------------------------------------------------------------------------------------------- */
 
 // WiFi settings
-const char *ssid     = "Aline e Renan 2.4GHz";
-const char *password = "luiz_priscilo";
+const char *ssid     = "ssid";
+const char *password = "psw";
 
 // Timezone (-12 +12)
 #define TIMEZONE                 -3
@@ -64,16 +64,9 @@ void setup()
   Serial.begin(74480);
   while (!Serial);
 
-  Serial.println();
-  Serial.print("Code date: ");
-  Serial.print(__DATE__);
-  Serial.print(" - ");
-  Serial.println(__TIME__);
+  Serial.printf ("%s library v%s \n", DS1390_CODE_NAME, DS1390_CODE_VERSION); 
 
   /* ----------------------------------------------------------------------------------------- */
-
-  // Delay for DS1390 boot (mandatory)
-  delay (200);
 
   // Check if memory was lost recently
   if (Clock.getValidation () == true)

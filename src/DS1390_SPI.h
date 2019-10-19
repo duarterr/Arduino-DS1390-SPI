@@ -1,11 +1,11 @@
 /* ------------------------------------------------------------------------------------------- */
 // DS1390 - Library for interfacing the DS1390 RTC using SPI
-// Version: 1.3
+// Version: 1.4
 // Author:  Renan R. Duarte
 // E-mail:  duarte.renan@hotmail.com
-// Date:    October 17, 2019
+// Date:    October 19, 2019
 //
-// Notes:   - A 200ms (min) delay is required after boot to read/write device memory.
+// Notes:   - A 200ms (min) delay is required after boot. It done inside the constructor
 //      	- Epoch related functions assume year is higher than 2000.
 //			- Century and Hundredths of Seconds registers are ignored in Epoch related functions
 //      	- Works with DS1391 aswell.
@@ -20,6 +20,7 @@
 //        		v1.1 - 10/10/2019 - Century bit is now used for validation
 //        		v1.2 - 14/10/2019 - Bug fixes and Epoch timestamp related functions
 //				v1.3 - 17/10/2019 - Oscillator Stop Flag used for validation
+//				v1.4 - 19/10/2019 - Powerup delay occur only if necessary now
 //
 // Released into the public domain
 /* ------------------------------------------------------------------------------------------- */
@@ -40,7 +41,7 @@
 
 // Code version
 #define DS1390_CODE_NAME		"DS1390_SPI"
-#define DS1390_CODE_VERSION		"1.3"
+#define DS1390_CODE_VERSION		"1.4"
 
 // DS1390 SPI clock speed
 #define DS1390_SPI_CLOCK        4000000

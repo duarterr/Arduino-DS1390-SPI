@@ -65,15 +65,9 @@ void setup()
   while (!Serial);
 
   Serial.println();
-  Serial.print("Code date: ");
-  Serial.print(__DATE__);
-  Serial.print(" - ");
-  Serial.println(__TIME__);
+  Serial.printf ("%s library v%s \n", DS1390_CODE_NAME, DS1390_CODE_VERSION); 
 
   /* ----------------------------------------------------------------------------------------- */
-
-  // Delay for DS1390 boot (mandatory)
-  delay (200);
 
   // Checkif memory was lost recently
   if (Clock.getValidation () == true)
