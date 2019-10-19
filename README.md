@@ -8,7 +8,7 @@ All parameters that can be passed as arguments to functions expect to receive va
 
 ## Notes
 
-A 200ms (min) delay is required after boot to read/write device memory (tRST).
+A 200ms (min) delay is required after boot. It done inside the constructor.
 
 Epoch related functions assume year is higher than 2000.
 
