@@ -49,7 +49,7 @@
 // Trickle charger modes
 #define DS1390_TCH_DISABLE      0x00  // Disabled
 #define DS1390_TCH_250_NO_D     0xA5  // 250 Ohms without diode
-#define DS1390_TCH_250_D        0x29  // 250 Ohms with diode
+#define DS1390_TCH_250_D        0xA9  // 250 Ohms with diode
 #define DS1390_TCH_2K_NO_D      0xA6  // 2 kOhms without diode
 #define DS1390_TCH_2K_D         0xAA  // 2 kOhms with diode
 #define DS1390_TCH_4K_NO_D      0xA7  // 4 kOhms without diode
