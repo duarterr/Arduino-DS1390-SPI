@@ -139,6 +139,9 @@ class DS1390
     // Constructor
     DS1390 (unsigned int PinCs);
 
+    // Initializer
+    void begin ();
+
     // Time format related functions
     unsigned char getTimeFormat ();
     bool setTimeFormat (unsigned char Format);

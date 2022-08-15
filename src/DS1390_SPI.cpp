@@ -41,7 +41,14 @@ DS1390::DS1390(unsigned int PinCs)
 {
   // Save CS pin bitmask
   _PinCs = PinCs;
+}
 
+/* ------------------------------------------------------------------------------------------- */
+// Initializer
+/* ------------------------------------------------------------------------------------------- */
+
+void DS1390::begin ()
+{
   // Set chip select pin as output
   pinMode (_PinCs, OUTPUT);
 
@@ -49,7 +56,7 @@ DS1390::DS1390(unsigned int PinCs)
   digitalWrite (_PinCs, HIGH);
 
   // A 200ms powerup delay is mandatory for DS1391
-  while (millis () < 200);
+  delay (200);
   
   // Start SPI bus
   SPI.begin ();
