@@ -191,9 +191,6 @@ class DS1390
     // DateTime buffer
     DS1390DateTime _DateTimeBuffer;
 
-    // Duration of months of the year
-    const uint8_t _MonthDuration[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};    
-
     // Device memory related functions
     void writeByte (uint8_t Address, uint8_t Data);
     uint8_t readByte (uint8_t Address); 

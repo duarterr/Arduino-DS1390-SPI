@@ -34,6 +34,12 @@
 #include "DS1390_SPI.h"
 
 /* ------------------------------------------------------------------------------------------- */
+// Constants
+/* ------------------------------------------------------------------------------------------- */
+// Duration of months of the year
+static const uint8_t _MonthDuration[] PROGMEM = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+/* ------------------------------------------------------------------------------------------- */
 // Constructor
 /* ------------------------------------------------------------------------------------------- */
 
@@ -199,7 +205,7 @@ uint32_t DS1390::dateTimeToEpoch (DS1390DateTime &DateTime, int Timezone)
       Epoch += (86400 * 29); // 29 days
     
     else
-      Epoch += 86400 * _MonthDuration[Counter - 1];
+      Epoch += 86400 * pgm_read_byte(&_MonthDuration[Counter - 1]);
   }
 
   // Add days for given month
@@ -312,7 +318,7 @@ void DS1390::epochToDateTime (uint32_t Epoch, DS1390DateTime &DateTime, int Time
     } 
     
     else 
-      MonthLength = _MonthDuration [Month];
+      MonthLength = pgm_read_byte(&_MonthDuration[Month]);
     
     if (EpochTime >= MonthLength) 
       EpochTime -= MonthLength;
