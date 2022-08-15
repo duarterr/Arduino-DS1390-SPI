@@ -196,8 +196,8 @@ class DS1390
     unsigned char readByte (unsigned char Address); 
     
     // Data conversion related functions
-    unsigned char dec2bcd (unsigned char DecValue); 
-    unsigned char bcd2dec (unsigned char BCDValue);    
+    static unsigned char dec2bcd (unsigned char DecValue);
+    static unsigned char bcd2dec (unsigned char BCDValue);
 };
 
 #endif
