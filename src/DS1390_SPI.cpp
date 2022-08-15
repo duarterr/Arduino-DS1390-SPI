@@ -920,9 +920,6 @@ bool DS1390::setDateTimeCentury (uint8_t Value)
   if (Value == getDateTimeCentury())
     return false;
 
-  // Get current month 
-  uint8_t BufferMonth = getDateTimeMonth();
-
   // Constrain value within allowed limits and send to DS1390
   writeByte (DS1390_ADDR_WRITE_MON, (dec2bcd(getDateTimeMonth()) | (constrain(Value, 0, 1) << 7)));
   
