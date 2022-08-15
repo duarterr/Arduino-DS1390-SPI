@@ -116,16 +116,16 @@
 // DS1390 date and time fields
 typedef struct  
 { 
-  unsigned char Hsecond = 0;  // Hundredths of Seconds   
-  unsigned char Second = 0;   // Seconds
-  unsigned char Minute = 0;   // Minutes 
-  unsigned char Hour = 0;     // Hours 
-  unsigned char Wday = 0;     // Day of the week (1 = Sunday)
-  unsigned char Day = 0;      // Day
-  unsigned char Month = 0;    // Month/Century
-  unsigned char Year = 0;     // Year
-  unsigned char Century = 0;  // Century - Logic 0 if year <= 99 or logic if year > 99
-  unsigned char AmPm = 0;     // AmPm flag - This field is set to 0 if 24h format is active
+  uint8_t Hsecond = 0;  // Hundredths of Seconds   
+  uint8_t Second = 0;   // Seconds
+  uint8_t Minute = 0;   // Minutes 
+  uint8_t Hour = 0;     // Hours 
+  uint8_t Wday = 0;     // Day of the week (1 = Sunday)
+  uint8_t Day = 0;      // Day
+  uint8_t Month = 0;    // Month/Century
+  uint8_t Year = 0;     // Year
+  uint8_t Century = 0;  // Century - Logic 0 if year <= 99 or logic if year > 99
+  uint8_t AmPm = 0;     // AmPm flag - This field is set to 0 if 24h format is active
   
 } DS1390DateTime;
 
@@ -137,14 +137,14 @@ class DS1390
 {
   public:
     // Constructor
-    DS1390 (unsigned int PinCs);
+    DS1390 (uint16_t PinCs);
 
     // Initializer
     void begin ();
 
     // Time format related functions
-    unsigned char getTimeFormat ();
-    bool setTimeFormat (unsigned char Format);
+    uint8_t getTimeFormat ();
+    bool setTimeFormat (uint8_t Format);
 	
 	// Data validation related functions
 	bool getValidation ();
@@ -153,54 +153,54 @@ class DS1390
     // Date and time related functions
     void getDateTimeAll(DS1390DateTime &DateTime);
     void setDateTimeAll(DS1390DateTime &DateTime);
-    unsigned char getDateTimeHSeconds ();
-    void setDateTimeHSeconds (unsigned char Value);    
-    unsigned char getDateTimeSeconds ();
-    bool setDateTimeSeconds (unsigned char Value);
-    unsigned char getDateTimeMinutes ();
-    bool setDateTimeMinutes (unsigned char Value);     
-    unsigned char getDateTimeHours ();
-    bool setDateTimeHours (unsigned char Value);         
-    unsigned char getDateTimeWday ();
-    bool setDateTimeWday (unsigned char Value); 
-    unsigned char getDateTimeDay ();
-    bool setDateTimeDay (unsigned char Value); 
-    unsigned char getDateTimeMonth ();
-    bool setDateTimeMonth (unsigned char Value); 
-    unsigned char getDateTimeYear ();
-    bool setDateTimeYear (unsigned char Value);   
-    unsigned char getDateTimeCentury ();
-    bool setDateTimeCentury (unsigned char Value); 	
-    unsigned char getDateTimeAmPm ();
-    bool setDateTimeAmPm (unsigned char Value);  
-	unsigned long getDateTimeEpoch (int Timezone);
-	void setDateTimeEpoch(unsigned long Epoch, int Timezone);
+    uint8_t getDateTimeHSeconds ();
+    void setDateTimeHSeconds (uint8_t Value);    
+    uint8_t getDateTimeSeconds ();
+    bool setDateTimeSeconds (uint8_t Value);
+    uint8_t getDateTimeMinutes ();
+    bool setDateTimeMinutes (uint8_t Value);     
+    uint8_t getDateTimeHours ();
+    bool setDateTimeHours (uint8_t Value);         
+    uint8_t getDateTimeWday ();
+    bool setDateTimeWday (uint8_t Value); 
+    uint8_t getDateTimeDay ();
+    bool setDateTimeDay (uint8_t Value); 
+    uint8_t getDateTimeMonth ();
+    bool setDateTimeMonth (uint8_t Value); 
+    uint8_t getDateTimeYear ();
+    bool setDateTimeYear (uint8_t Value);   
+    uint8_t getDateTimeCentury ();
+    bool setDateTimeCentury (uint8_t Value); 	
+    uint8_t getDateTimeAmPm ();
+    bool setDateTimeAmPm (uint8_t Value);  
+	uint32_t getDateTimeEpoch (int Timezone);
+	void setDateTimeEpoch(uint32_t Epoch, int Timezone);
                     
     // Trickle charger related functions
-    unsigned char getTrickleChargerMode ();
-    bool setTrickleChargerMode (unsigned char Mode);
+    uint8_t getTrickleChargerMode ();
+    bool setTrickleChargerMode (uint8_t Mode);
 	
 	// Epoch timestamp related functions
-	unsigned long dateTimeToEpoch (DS1390DateTime &DateTime, int Timezone);
-	void epochToDateTime (unsigned long Epoch, DS1390DateTime &DateTime, int Timezone);
+	uint32_t dateTimeToEpoch (DS1390DateTime &DateTime, int Timezone);
+	void epochToDateTime (uint32_t Epoch, DS1390DateTime &DateTime, int Timezone);
 	
   private:  
     // CS pin mask
-    unsigned int _PinCs;
+    uint16_t _PinCs;
 
     // DateTime buffer
     DS1390DateTime _DateTimeBuffer;
 
     // Duration of months of the year
-    const unsigned char _MonthDuration[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};    
+    const uint8_t _MonthDuration[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};    
 
     // Device memory related functions
-    void writeByte (unsigned char Address, unsigned char Data);
-    unsigned char readByte (unsigned char Address); 
+    void writeByte (uint8_t Address, uint8_t Data);
+    uint8_t readByte (uint8_t Address); 
     
     // Data conversion related functions
-    static unsigned char dec2bcd (unsigned char DecValue);
-    static unsigned char bcd2dec (unsigned char BCDValue);
+    static uint8_t dec2bcd (uint8_t DecValue);
+    static uint8_t bcd2dec (uint8_t BCDValue);
 };
 
 #endif
