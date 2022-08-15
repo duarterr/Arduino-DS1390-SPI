@@ -162,7 +162,7 @@ uint8_t DS1390::readByte (uint8_t Address)
 uint32_t DS1390::dateTimeToEpoch (DS1390DateTime &DateTime, int Timezone)
 {
   // Seconds since 00:00:00 - Jan 1, 1970 GMT
-  double Epoch = 0;
+  uint32_t Epoch = 0;
 
   // Counter
   uint16_t Counter = 0;
