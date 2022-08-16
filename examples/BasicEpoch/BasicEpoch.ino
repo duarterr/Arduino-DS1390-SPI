@@ -58,6 +58,9 @@ void setup()
 
   /* ----------------------------------------------------------------------------------------- */
 
+  // Initialize hardware
+  Clock.begin();
+
   // Checkif memory was lost recently
   if (Clock.getValidation () == true)
     Serial.println ("Memory content is valid.");

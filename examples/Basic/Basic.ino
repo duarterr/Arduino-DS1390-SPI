@@ -48,6 +48,9 @@ void setup()
 
   /* ----------------------------------------------------------------------------------------- */
 
+  // Initialize hardware
+  Clock.begin();
+
   // Checkif memory was lost recently
   if (Clock.getValidation () == true)
     Serial.println ("Memory content is valid.");
@@ -75,8 +78,7 @@ void setup()
   Time.Wday = 7;
   Time.Day = 1;
   Time.Month = 2;
-  Time.Year = 3;
-  Time.Century = 0;
+  Time.Year = 2003;
   
   // Set all date and time registers at once
   Clock.setDateTimeAll (Time);
@@ -92,7 +94,6 @@ void setup()
 //  Clock.setDateTimeDay (Time.Day);
 //  Clock.setDateTimeMonth (Time.Month);
 //  Clock.setDateTimeYear (Time.Year);
-//  Clock.setDateTimeCentury (Time.Century); 
 //  Clock.setDateTimeAmPm (Time.AmPm);  
 }
 
@@ -116,7 +117,6 @@ void loop()
   Time.Day = Clock.getDateTimeDay ();
   Time.Month = Clock.getDateTimeMonth ();
   Time.Year = Clock.getDateTimeYear ();
-  Time.Century = Clock.getDateTimeCentury ();
   //Time.AmPm = Clock.getDateTimeAmPm ();
 
   // Display result
@@ -147,7 +147,7 @@ void loop()
       break;                               
   }
 
-  Serial.printf ("%02d/%02d/2%1d%02d - %02d:%02d:%02d \n", Time.Day, Time.Month, Time.Century,
+  Serial.printf ("%02d/%02d/%04d - %02d:%02d:%02d \n", Time.Day, Time.Month,
     Time.Year, Time.Hour, Time.Minute, Time.Second);
   //Serial.printf ("AM/PM: %d \n", Time.AmPm); // Not used
 
