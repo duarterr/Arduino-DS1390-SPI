@@ -64,7 +64,7 @@ void setup()
   Serial.begin(74480);
   while (!Serial);
 
-  Serial.printf ("%s library v%s \n", DS1390_CODE_NAME, DS1390_CODE_VERSION); 
+  Serial.printf ("%s library v%s \n", DS1390_CODE_NAME, DS1390_CODE_VERSION);
 
   /* ----------------------------------------------------------------------------------------- */
 
@@ -76,13 +76,13 @@ void setup()
     Serial.println ("Memory content is valid.");
   else
     Serial.println ("Memory content was recently lost! Please update date and time values.");
-    
+
   // Configure trickle carger (250 ohms with one series diode)
   Clock.setTrickleChargerMode (DS1390_TCH_250_D);
 
   // Set time format - 24h
   //Clock.setTimeFormat(DS1390_FORMAT_24H);
-  
+
   // Get current format to confirm configuration
   if (Clock.getTimeFormat() == DS1390_FORMAT_24H)
     Serial.println ("Format: 24h");
@@ -94,7 +94,7 @@ void setup()
 
   // Wait for connection
   Serial.printf ("Connecting to WiFi");
-  while ( WiFi.status() != WL_CONNECTED ) 
+  while ( WiFi.status() != WL_CONNECTED )
   {
     delay ( 500 );
     Serial.print ( "." );
@@ -104,52 +104,52 @@ void setup()
   Serial.println();
 
   // Start NTP client
-  NTP.begin();  
+  NTP.begin();
 
 
 
 
 
-  
+
 
   // Read DS1390 registers
   unsigned long Epoch = Clock.getDateTimeEpoch (TIMEZONE);
 
-  // Convert Epoch to DateTime - Not necessary. Values can be obtained directly using Clock.getDateTimeAll (Time); 
+  // Convert Epoch to DateTime - Not necessary. Values can be obtained directly using Clock.getDateTimeAll (Time);
   Clock.epochToDateTime (Epoch, Time, TIMEZONE);
 
   // Display result
   Serial.println ("Old DS1390 value: ");
-  
+
   switch (Time.Wday)
   {
     case 1:
       Serial.printf ("Sun, ");
       break;
     case 2:
-      Serial.printf ("Mon, "); 
+      Serial.printf ("Mon, ");
       break;
     case 3:
-      Serial.printf ("Tue, "); 
+      Serial.printf ("Tue, ");
       break;
     case 4:
       Serial.printf ("Wed, ");
-      break; 
+      break;
     case 5:
       Serial.printf ("Thu, ");
       break;
     case 6:
       Serial.printf ("Fri, ");
-      break; 
+      break;
     case 7:
       Serial.printf ("Sat, ");
-      break;                               
+      break;
   }
 
   Serial.printf ("%02d/%02d/20%02d - %02d:%02d:%02d \n", Time.Day, Time.Month, Time.Year, Time.Hour, Time.Minute, Time.Second);
   //Serial.printf ("AM/PM: %d \n", Time.AmPm);
 
-  Serial.printf ("Epoch: %d \n", Epoch);  
+  Serial.printf ("Epoch: %d \n", Epoch);
 
 
 
@@ -170,29 +170,29 @@ void setup()
       Serial.printf ("Sun, ");
       break;
     case 2:
-      Serial.printf ("Mon, "); 
+      Serial.printf ("Mon, ");
       break;
     case 3:
-      Serial.printf ("Tue, "); 
+      Serial.printf ("Tue, ");
       break;
     case 4:
       Serial.printf ("Wed, ");
-      break; 
+      break;
     case 5:
       Serial.printf ("Thu, ");
       break;
     case 6:
       Serial.printf ("Fri, ");
-      break; 
+      break;
     case 7:
       Serial.printf ("Sat, ");
-      break;                               
+      break;
   }
 
   Serial.printf ("%02d/%02d/20%02d - %02d:%02d:%02d \n", Time.Day, Time.Month, Time.Year, Time.Hour, Time.Minute, Time.Second);
   //Serial.printf ("AM/PM: %d \n", Time.AmPm);
 
-  Serial.printf ("Epoch: %d \n", NTP.getEpochTime()); 
+  Serial.printf ("Epoch: %d \n", NTP.getEpochTime());
 
 
 
@@ -203,9 +203,9 @@ void setup()
   Clock.setDateTimeEpoch (NTP.getEpochTime(), TIMEZONE);
 
   // OR
-  
+
 //  // Update DS1390 time using DateTime structure
-//  Clock.setDateTimeAll (Time);   
+//  Clock.setDateTimeAll (Time);
 
 
 
@@ -214,8 +214,8 @@ void setup()
 
   // Read DS1390 registers individually
   Time.Second = Clock.getDateTimeSeconds ();
-  Time.Minute = Clock.getDateTimeMinutes ();  
-  Time.Hour = Clock.getDateTimeHours ();      
+  Time.Minute = Clock.getDateTimeMinutes ();
+  Time.Hour = Clock.getDateTimeHours ();
   Time.Wday = Clock.getDateTimeWday ();
   Time.Day = Clock.getDateTimeDay ();
   Time.Month = Clock.getDateTimeMonth ();
@@ -223,37 +223,37 @@ void setup()
 
   // Display result
   Serial.println ("New DS1390 value: ");
-  
+
   switch (Time.Wday)
   {
     case 1:
       Serial.printf ("Sun, ");
       break;
     case 2:
-      Serial.printf ("Mon, "); 
+      Serial.printf ("Mon, ");
       break;
     case 3:
-      Serial.printf ("Tue, "); 
+      Serial.printf ("Tue, ");
       break;
     case 4:
       Serial.printf ("Wed, ");
-      break; 
+      break;
     case 5:
       Serial.printf ("Thu, ");
       break;
     case 6:
       Serial.printf ("Fri, ");
-      break; 
+      break;
     case 7:
       Serial.printf ("Sat, ");
-      break;                               
+      break;
   }
 
   Serial.printf ("%02d/%02d/20%02d - %02d:%02d:%02d \n", Time.Day, Time.Month, Time.Year, Time.Hour, Time.Minute, Time.Second);
   //Serial.printf ("AM/PM: %d \n", Time.AmPm);
 
   Epoch = Clock.dateTimeToEpoch (Time, TIMEZONE);
-  Serial.printf ("Epoch: %d \n", Epoch);           
+  Serial.printf ("Epoch: %d \n", Epoch);
 }
 
 /* ------------------------------------------------------------------------------------------- */
@@ -261,7 +261,7 @@ void setup()
 /* ------------------------------------------------------------------------------------------- */
 
 void loop()
-{ 
+{
   // Nothing here
 }
 
