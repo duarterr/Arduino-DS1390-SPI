@@ -39,10 +39,15 @@
 static const uint8_t _MonthDuration[] PROGMEM = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 /* ------------------------------------------------------------------------------------------- */
-// Initializer
+// Functions definitions
 /* ------------------------------------------------------------------------------------------- */
 
-void DS1390::begin ()
+// Name:        begin
+// Description: Initializes hardware
+// Arguments:   Wait - disabling it allows user to use a different method
+// Returns:     none
+
+void DS1390::begin (bool Wait)
 {
   // Set chip select pin as output
   pinMode (_PinCs, OUTPUT);
@@ -51,14 +56,13 @@ void DS1390::begin ()
   digitalWrite (_PinCs, HIGH);
 
   // A 200ms powerup delay is mandatory for DS1391
-  delay (200);
+  if (Wait)
+    delay (200);
 
   // Start SPI bus
   SPI.begin ();
 }
 
-/* ------------------------------------------------------------------------------------------- */
-// Functions definitions
 /* ------------------------------------------------------------------------------------------- */
 
 // Name:        dec2bcd

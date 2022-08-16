@@ -141,7 +141,7 @@ class DS1390
     {}
 
     // Initializer
-    void begin ();
+    void begin (bool Wait=true);
 
     // Time format related functions
     uint8_t getTimeFormat ();
