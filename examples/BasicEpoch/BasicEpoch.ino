@@ -119,7 +119,7 @@ void loop()
       Serial.printf ("Thu, ");
       break;
     case 6:
-      Serial.printf ("Fry, "); 
+      Serial.printf ("Fri, ");
       break; 
     case 7:
       Serial.printf ("Sat, ");
