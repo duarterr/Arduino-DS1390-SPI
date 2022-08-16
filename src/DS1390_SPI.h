@@ -137,7 +137,9 @@ class DS1390
 {
   public:
     // Constructor
-    DS1390 (uint16_t PinCs);
+    constexpr DS1390 (uint16_t PinCs)
+      : _PinCs(PinCs)   // Save CS pin
+    {}
 
     // Initializer
     void begin ();
@@ -186,7 +188,7 @@ class DS1390
 	
   private:  
     // CS pin mask
-    uint16_t _PinCs;
+    const uint16_t _PinCs;
 
     // DateTime buffer
     DS1390DateTime _DateTimeBuffer;
