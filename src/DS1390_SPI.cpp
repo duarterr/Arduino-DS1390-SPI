@@ -495,21 +495,22 @@ uint8_t DS1390::weekDayFromDate (const DS1390DateTime &DateTime) {
 //              Wday if set to 0 will be calculated automatically.
 // Returns:     None
 
-void DS1390::setDateTimeAll(DS1390DateTime &DateTime)
+void DS1390::setDateTimeAll(const DS1390DateTime &DateTime)
 {
   // Struck to store raw data to be written
   DS1390DateTime Buffer;
 
   // Calculates week day if not set
-  if (DateTime.Wday == 0) {
-	  DateTime.Wday = weekDayFromDate(DateTime);
+  uint8_t Wday = DateTime.Wday;
+  if (Wday == 0) {
+	  Wday = weekDayFromDate(DateTime);
   }
 
   // Prepares buffer - Constrain values within allowed limits
   Buffer.Hsecond = dec2bcd(constrain(DateTime.Hsecond, 0, 99));
   Buffer.Second = dec2bcd(constrain(DateTime.Second, 0, 59));
   Buffer.Minute = dec2bcd(constrain(DateTime.Minute, 0, 59));
-  Buffer.Wday = dec2bcd(constrain(DateTime.Wday, 1, 7));
+  Buffer.Wday = dec2bcd(constrain(Wday, 1, 7));
   Buffer.Day = dec2bcd(constrain(DateTime.Day, 1, 31));
   Buffer.Year = dec2bcd(DateTime.Year % 100);
 

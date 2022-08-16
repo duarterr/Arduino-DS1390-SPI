@@ -153,7 +153,7 @@ class DS1390
 
     // Date and time related functions
     void getDateTimeAll(DS1390DateTime &DateTime);
-    void setDateTimeAll(DS1390DateTime &DateTime);
+    void setDateTimeAll(const DS1390DateTime &DateTime);
     uint8_t getDateTimeHSeconds ();
     void setDateTimeHSeconds (uint8_t Value);
     uint8_t getDateTimeSeconds ();
