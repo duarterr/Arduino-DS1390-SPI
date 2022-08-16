@@ -679,8 +679,8 @@ bool DS1390::setDateTimeHours (uint8_t Value)
   // 12h mode - Store AmPm info in AmPm bit of Hour register and make sure format bit is 1
   else
   {
-    uint8_t AmPm = (readByte(DS1390_ADDR_READ_HRS) & DS1390_MASK_AMPM) >> 5;
-    Value = dec2bcd(constrain(Value, 1, 12)) | (AmPm << 5) | DS1390_MASK_FORMAT;
+    uint8_t AmPmFlag = readByte(DS1390_ADDR_READ_HRS) & DS1390_MASK_AMPM;
+    Value = dec2bcd(constrain(Value, 1, 12)) | AmPmFlag | DS1390_MASK_FORMAT;
   }
 
   // Send value to DS1390
