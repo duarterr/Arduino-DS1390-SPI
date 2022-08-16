@@ -6,8 +6,7 @@
 // Date:    October 19, 2019
 //
 // Notes:   - A 200ms (min) delay is required after boot. It done inside the constructor
-//      	- Epoch related functions assume year is higher than 2000.
-//			- Century and Hundredths of Seconds registers are ignored in Epoch related functions
+//			- Hundredths of Seconds register is ignored in Epoch related functions
 //      	- Works with DS1391 aswell.
 //      	- Alarm-related functions not implemented yet
 //
@@ -163,8 +162,8 @@ uint32_t DS1390::dateTimeToEpoch (DS1390DateTime &DateTime, int Timezone)
   // Counter
   uint16_t Counter = 0;
 
-  // Epoch time starts in 1970 - Assumes current time is after 2000
-  DateTime.Year += 30;
+  // Epoch time starts in 1970
+  uint16_t EpochYear = DateTime.Year - 1970;
 
   // 12h mode
   if ((getTimeFormat() == DS1390_FORMAT_12H) && (DateTime.AmPm == DS1390_PM))
@@ -178,10 +177,10 @@ uint32_t DS1390::dateTimeToEpoch (DS1390DateTime &DateTime, int Timezone)
   }
   
   // Seconds from 1970 until 1 jan 00:00:00 of the given year
-  Epoch += DateTime.Year * (86400 * 365); // 31536000 seconds per year
+  Epoch += EpochYear * (86400 * 365); // 31536000 seconds per year
 
   // Add extra days for leap years
-  for (Counter = 0; Counter < DateTime.Year; Counter++)
+  for (Counter = 0; Counter < EpochYear; Counter++)
   {
     if (LEAP_YEAR(Counter))
       Epoch += 86400;
@@ -191,7 +190,7 @@ uint32_t DS1390::dateTimeToEpoch (DS1390DateTime &DateTime, int Timezone)
   for (Counter = 1; Counter < DateTime.Month; Counter++)
   {
     // February - Leap year
-    if ((Counter == 2) && LEAP_YEAR(DateTime.Year))
+    if ((Counter == 2) && LEAP_YEAR(EpochYear))
       Epoch += (86400 * 29); // 29 days
     
     else
@@ -404,6 +403,18 @@ bool DS1390::setTimeFormat (uint8_t Format)
 
 /* ------------------------------------------------------------------------------------------- */
 
+// Name:        getCenturyBase
+// Description: Calculates century base (__00)
+// Arguments:   Century - RTC century bit
+// Returns:     Current century year
+
+uint16_t DS1390::getCenturyBase (bool Century) const
+{
+	return _YearBase + (Century ? 100u : 0u);
+}
+
+/* ------------------------------------------------------------------------------------------- */
+
 // Name:        getDateTimeAll
 // Description: Gets all time related register values from DS1390 memory
 // Arguments:   DateTime - DS1390DateTime structure to store the data
@@ -460,8 +471,7 @@ void DS1390::getDateTimeAll(DS1390DateTime &DateTime)
   DateTime.Wday = bcd2dec(Buffer.Wday);
   DateTime.Day = bcd2dec(Buffer.Day);
   DateTime.Month = bcd2dec(Buffer.Month & 0x1F); // Ignore Century bit
-  DateTime.Year = bcd2dec(Buffer.Year);
-  DateTime.Century = ((Buffer.Month & DS1390_MASK_CENTURY) >> 7);
+  DateTime.Year = bcd2dec(Buffer.Year) + getCenturyBase(Buffer.Month & DS1390_MASK_CENTURY);
 }
 
 /* ------------------------------------------------------------------------------------------- */
@@ -482,7 +492,7 @@ void DS1390::setDateTimeAll(DS1390DateTime &DateTime)
   Buffer.Minute = dec2bcd(constrain(DateTime.Minute, 0, 59));
   Buffer.Wday = dec2bcd(constrain(DateTime.Wday, 1, 7));
   Buffer.Day = dec2bcd(constrain(DateTime.Day, 1, 31));
-  Buffer.Year = dec2bcd(constrain(DateTime.Year, 0, 99));
+  Buffer.Year = dec2bcd(DateTime.Year % 100);
 
   // 24h mode
   if (getTimeFormat() == DS1390_FORMAT_24H)
@@ -493,7 +503,8 @@ void DS1390::setDateTimeAll(DS1390DateTime &DateTime)
     Buffer.Hour = dec2bcd(constrain(DateTime.Hour, 1, 12)) | (DateTime.AmPm << 5) | DS1390_MASK_FORMAT;
 
   // Store Century info in Century bit of Month register
-  Buffer.Month = dec2bcd(constrain(DateTime.Month, 1, 12)) | (DateTime.Century << 7);  
+  const uint8_t Century = DateTime.Year >= getCenturyBase(true);
+  Buffer.Month = dec2bcd(constrain(DateTime.Month, 1, 12)) | (Century << 7);
 
   // Configure SPI transaction
   SPI.beginTransaction(SPISettings(DS1390_SPI_CLOCK, MSBFIRST, SPI_MODE1));
@@ -804,27 +815,29 @@ bool DS1390::setDateTimeMonth (uint8_t Value)
 // Arguments:   None
 // Returns:     Year
 
-uint8_t DS1390::getDateTimeYear ()
+uint16_t DS1390::getDateTimeYear ()
 {
   // Return register value
-  return (bcd2dec(readByte(DS1390_ADDR_READ_YRS)));
+  const uint16_t CenturyBase = getCenturyBase(getDateTimeCentury());
+  return bcd2dec(readByte(DS1390_ADDR_READ_YRS)) + CenturyBase;
 }
 
 /* ------------------------------------------------------------------------------------------- */
 
 // Name:        setDateTimeYear
 // Description: Sets year in DS1390 memory
-// Arguments:   Year (constrained between 0 and 99)
+// Arguments:   Year
 // Returns:     false if new value is equal to current or true on completion
 
-bool DS1390::setDateTimeYear (uint8_t Value)
+bool DS1390::setDateTimeYear (uint16_t Value)
 {
   // Check if new value is equal to current
   if (Value == getDateTimeYear())
     return false;
 
   // Constrain value within allowed limits and send to DS1390
-  writeByte (DS1390_ADDR_WRITE_YRS, dec2bcd(constrain(Value, 0, 99)));
+  writeByte (DS1390_ADDR_WRITE_YRS, dec2bcd(Value % 100));
+  setDateTimeCentury (Value >= getCenturyBase(true));
 
   // Set validation bit
   setValidation ();
@@ -889,35 +902,25 @@ bool DS1390::setDateTimeAmPm (uint8_t Value)
 // Name:        getDateTimeCentury
 // Description: Gets century flag from DS1390 memory
 // Arguments:   None
-// Returns:     Century
+// Returns:     Century flag
 
 uint8_t DS1390::getDateTimeCentury ()
 {
   // Return century flag
-  return ((readByte(DS1390_ADDR_READ_MON) & DS1390_MASK_CENTURY) >> 7);
+  return readByte(DS1390_ADDR_READ_MON) & DS1390_MASK_CENTURY;
 }
 
 /* ------------------------------------------------------------------------------------------- */
 
 // Name:        setDateTimeCentury
 // Description: Sets century flag in DS1390 memory
-// Arguments:   Century (constrained between 0 and 1)
-// Returns:     false if new value is equal to current or true on completion
+// Arguments:   Shifted century flag (0 or 1)
+// Returns:     none
 
-bool DS1390::setDateTimeCentury (uint8_t Value)
+void DS1390::setDateTimeCentury (bool Value)
 {
-  // Check if new value is equal to current
-  if (Value == getDateTimeCentury())
-    return false;
-
   // Constrain value within allowed limits and send to DS1390
-  writeByte (DS1390_ADDR_WRITE_MON, (dec2bcd(getDateTimeMonth()) | (constrain(Value, 0, 1) << 7)));
-  
-  // Set validation bit
-  setValidation ();  
-  
-  // Success
-  return true;  
+  writeByte (DS1390_ADDR_WRITE_MON, (dec2bcd(getDateTimeMonth()) | ((uint8_t)Value << 7)));
 }
 
 /* ------------------------------------------------------------------------------------------- */

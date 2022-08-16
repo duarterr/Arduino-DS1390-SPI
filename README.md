@@ -10,8 +10,6 @@ All parameters that can be passed as arguments to functions expect to receive va
 
 A 200ms (min) delay is required after boot. It done inside the constructor.
 
-Epoch related functions assume year is higher than 2000.
-
 Century and Hundredths of Seconds registers are ignored in Epoch related functions
 
 Works with DS1391 aswell.

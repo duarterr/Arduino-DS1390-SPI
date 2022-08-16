@@ -6,8 +6,7 @@
 // Date:    October 19, 2019
 //
 // Notes:   - A 200ms (min) delay is required after boot. It done inside the constructor
-//      	- Epoch related functions assume year is higher than 2000.
-//			- Century and Hundredths of Seconds registers are ignored in Epoch related functions
+//          - Hundredths of Seconds registers are ignored in Epoch related functions
 //      	- Works with DS1391 aswell.
 //      	- Alarm-related functions not implemented yet
 //
@@ -122,9 +121,8 @@ typedef struct
   uint8_t Hour = 0;     // Hours 
   uint8_t Wday = 0;     // Day of the week (1 = Sunday)
   uint8_t Day = 0;      // Day
-  uint8_t Month = 0;    // Month/Century
-  uint8_t Year = 0;     // Year
-  uint8_t Century = 0;  // Century - Logic 0 if year <= 99 or logic if year > 99
+  uint8_t Month = 0;    // Month
+  uint16_t Year = 0;    // Year
   uint8_t AmPm = 0;     // AmPm flag - This field is set to 0 if 24h format is active
   
 } DS1390DateTime;
@@ -137,8 +135,9 @@ class DS1390
 {
   public:
     // Constructor
-    constexpr DS1390 (uint16_t PinCs)
-      : _PinCs(PinCs)   // Save CS pin
+    constexpr DS1390 (uint16_t PinCs, uint16_t YearBase = 2000)
+      : _PinCs(PinCs),      // Save CS pin
+        _YearBase(YearBase) // Save starting year
     {}
 
     // Initializer
@@ -169,10 +168,8 @@ class DS1390
     bool setDateTimeDay (uint8_t Value); 
     uint8_t getDateTimeMonth ();
     bool setDateTimeMonth (uint8_t Value); 
-    uint8_t getDateTimeYear ();
+    uint16_t getDateTimeYear ();
     bool setDateTimeYear (uint8_t Value);   
-    uint8_t getDateTimeCentury ();
-    bool setDateTimeCentury (uint8_t Value); 	
     uint8_t getDateTimeAmPm ();
     bool setDateTimeAmPm (uint8_t Value);  
 	uint32_t getDateTimeEpoch (int Timezone);
@@ -190,8 +187,16 @@ class DS1390
     // CS pin mask
     const uint16_t _PinCs;
 
+    // Starting year (+ century + year%100 = current year)
+    const uint16_t _YearBase;
+
     // DateTime buffer
     DS1390DateTime _DateTimeBuffer;
+
+    // Year related functions
+    uint16_t getCenturyBase (bool Century) const;
+    uint8_t getDateTimeCentury ();
+    void setDateTimeCentury (bool Value);
 
     // Device memory related functions
     void writeByte (uint8_t Address, uint8_t Data);
