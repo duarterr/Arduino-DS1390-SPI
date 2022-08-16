@@ -6,20 +6,20 @@
 // Date:    October 19, 2019
 //
 // Notes:   - A 200ms (min) delay is required after boot. It done inside the constructor
-//			- Hundredths of Seconds register is ignored in Epoch related functions
-//      	- Works with DS1391 aswell.
-//      	- Alarm-related functions not implemented yet
+//          - Hundredths of Seconds register is ignored in Epoch related functions
+//          - Works with DS1391 aswell.
+//          - Alarm-related functions not implemented yet
 //
 // Knwon bugs:  - In 12h format, the device do not change the AM/PM bit neither increments
 //              the day of the week and day counters. Everything works in 24h mode
 //
 //              - Reading Hundredths of Seconds too often makes the device loose accuracy
 //
-// Changelog: 	v1.0 - 09/10/2019 - First release
-//        		v1.1 - 10/10/2019 - Century bit is now used for validation
-//        		v1.2 - 14/10/2019 - Bug fixes and Epoch timestamp related functions
-//				v1.3 - 17/10/2019 - Oscillator Stop Flag used for validation
-//				v1.4 - 19/10/2019 - Powerup delay occur only if necessary now
+// Changelog:   v1.0 - 09/10/2019 - First release
+//              v1.1 - 10/10/2019 - Century bit is now used for validation
+//              v1.2 - 14/10/2019 - Bug fixes and Epoch timestamp related functions
+//              v1.3 - 17/10/2019 - Oscillator Stop Flag used for validation
+//              v1.4 - 19/10/2019 - Powerup delay occur only if necessary now
 //
 // Released into the public domain
 /* ------------------------------------------------------------------------------------------- */
@@ -52,7 +52,7 @@ void DS1390::begin ()
 
   // A 200ms powerup delay is mandatory for DS1391
   delay (200);
-  
+
   // Start SPI bus
   SPI.begin ();
 }
@@ -151,7 +151,7 @@ uint8_t DS1390::readByte (uint8_t Address)
 // Name:        dateTimeToEpoch
 // Description: Converts DS1390DateTime structure to Epoch timestamp - Ignores hundredths of sec.
 // Arguments:   DateTime - DS1390DateTime structure with the data
-//				      Timezone - Timezone info (-12 to +12, 0 = GMT) of DateTime
+//              Timezone - Timezone info (-12 to +12, 0 = GMT) of DateTime
 // Returns:     Epoch timestamp referred to Timezone
 
 uint32_t DS1390::dateTimeToEpoch (DS1390DateTime &DateTime, int Timezone)
@@ -168,14 +168,14 @@ uint32_t DS1390::dateTimeToEpoch (DS1390DateTime &DateTime, int Timezone)
   // 12h mode
   if ((getTimeFormat() == DS1390_FORMAT_12H) && (DateTime.AmPm == DS1390_PM))
     DateTime.Hour += 12;
-    
+
   // Correct value for given timezone
   if (Timezone != 0)
   {
     long Correction = (constrain(Timezone, -12, 12) * -3600);
-    Epoch += Correction; 
+    Epoch += Correction;
   }
-  
+
   // Seconds from 1970 until 1 jan 00:00:00 of the given year
   Epoch += EpochYear * (86400 * 365); // 31536000 seconds per year
 
@@ -192,14 +192,14 @@ uint32_t DS1390::dateTimeToEpoch (DS1390DateTime &DateTime, int Timezone)
     // February - Leap year
     if ((Counter == 2) && LEAP_YEAR(EpochYear))
       Epoch += (86400 * 29); // 29 days
-    
+
     else
       Epoch += 86400 * pgm_read_byte(&_MonthDuration[Counter - 1]);
   }
 
   // Add days for given month
   Epoch += (DateTime.Day - 1) * 86400; // 86400 seconds per day
-  Epoch += DateTime.Hour * 3600;	// 3600 seconds per hour
+  Epoch += DateTime.Hour * 3600; // 3600 seconds per hour
   Epoch += DateTime.Minute * 60; // 60 seconds per minute
   Epoch += DateTime.Second;
 
@@ -212,8 +212,8 @@ uint32_t DS1390::dateTimeToEpoch (DS1390DateTime &DateTime, int Timezone)
 // Name:        epochToDateTime
 // Description: Converts Epoch timestamp to DS1390DateTime structure - Ignores hundredths of sec.
 // Arguments:   Epoch - Epoch timestamp
-//				      DateTime - DS1390DateTime structure to store the data
-//				      Timezone - Timezone info (-12 to +12, 0 = GMT) of Epoch
+//              DateTime - DS1390DateTime structure to store the data
+//              Timezone - Timezone info (-12 to +12, 0 = GMT) of Epoch
 // Returns:     None
 
 void DS1390::epochToDateTime (uint32_t Epoch, DS1390DateTime &DateTime, int Timezone)
@@ -228,7 +228,7 @@ void DS1390::epochToDateTime (uint32_t Epoch, DS1390DateTime &DateTime, int Time
   // Correct value for given timezone
   if (Timezone != 0)
     EpochTime += (Timezone * 3600);
-  
+
   // Calculate seconds
   DateTime.Second = EpochTime % 60;
 
@@ -271,7 +271,7 @@ void DS1390::epochToDateTime (uint32_t Epoch, DS1390DateTime &DateTime, int Time
     else
     {
       DateTime.Hour -= 12;
-      DateTime.AmPm = DS1390_PM;      
+      DateTime.AmPm = DS1390_PM;
     }
   }
 
@@ -279,10 +279,10 @@ void DS1390::epochToDateTime (uint32_t Epoch, DS1390DateTime &DateTime, int Time
   EpochTime /= 24;
 
   // Get weekday
-  DateTime.Wday = ((EpochTime + 4) % 7) + 1;  // Sunday is day 1 
+  DateTime.Wday = ((EpochTime + 4) % 7) + 1;  // Sunday is day 1
 
   // Calculate years since 1970
-  while((unsigned)(Days += (LEAP_YEAR(Year) ? 366 : 365)) <= EpochTime) 
+  while((unsigned)(Days += (LEAP_YEAR(Year) ? 366 : 365)) <= EpochTime)
     Year++;
 
   // Get absolute value
@@ -294,25 +294,25 @@ void DS1390::epochToDateTime (uint32_t Epoch, DS1390DateTime &DateTime, int Time
   EpochTime -= Days;
 
   // Calculate month duration
-  for (Month = 0; Month < 12; Month++) 
+  for (Month = 0; Month < 12; Month++)
   {
     // February
-    if (Month == 1) 
-    { 
-      if (LEAP_YEAR(Year)) 
+    if (Month == 1)
+    {
+      if (LEAP_YEAR(Year))
         MonthLength = 29;
-      
-      else 
+
+      else
         MonthLength = 28;
-    } 
-    
-    else 
+    }
+
+    else
       MonthLength = pgm_read_byte(&_MonthDuration[Month]);
-    
-    if (EpochTime >= MonthLength) 
+
+    if (EpochTime >= MonthLength)
       EpochTime -= MonthLength;
-    
-    else 
+
+    else
       break;
   }
 
@@ -320,7 +320,7 @@ void DS1390::epochToDateTime (uint32_t Epoch, DS1390DateTime &DateTime, int Time
   DateTime.Month = Month + 1;
 
   // Calculate day
-  DateTime.Day = EpochTime + 1; 
+  DateTime.Day = EpochTime + 1;
 }
 
 /* ------------------------------------------------------------------------------------------- */
@@ -410,7 +410,7 @@ bool DS1390::setTimeFormat (uint8_t Format)
 
 uint16_t DS1390::getCenturyBase (bool Century) const
 {
-	return _YearBase + (Century ? 100u : 0u);
+  return _YearBase + (Century ? 100u : 0u);
 }
 
 /* ------------------------------------------------------------------------------------------- */
@@ -530,9 +530,9 @@ void DS1390::setDateTimeAll(DS1390DateTime &DateTime)
 
   // End SPI transaction
   SPI.endTransaction();
-  
+
   // Set validation bit
-  setValidation ();  
+  setValidation ();
 }
 
 /* ------------------------------------------------------------------------------------------- */
@@ -794,15 +794,15 @@ bool DS1390::setDateTimeMonth (uint8_t Value)
 
   // Century flag
   uint8_t Century = ((readByte(DS1390_ADDR_READ_MON) & DS1390_MASK_CENTURY) >> 7);
-  
+
   // Store Century info in Century bit of Month register
-  Value = dec2bcd(constrain(Value, 1, 12)) | (Century << 7);  
+  Value = dec2bcd(constrain(Value, 1, 12)) | (Century << 7);
 
   // Send value to DS1390
   writeByte (DS1390_ADDR_WRITE_MON, Value);
-  
+
   // Set validation bit
-  setValidation ();  
+  setValidation ();
 
   // Success
   return true;
@@ -986,11 +986,11 @@ bool DS1390::setTrickleChargerMode (uint8_t Mode)
 
 uint32_t DS1390::getDateTimeEpoch (int Timezone)
 {
-	// Get date and time from DS1390 memory
-	getDateTimeAll(_DateTimeBuffer);
-	
-	// Convert to Epoch format and return result
-	return dateTimeToEpoch (_DateTimeBuffer, Timezone);
+  // Get date and time from DS1390 memory
+  getDateTimeAll(_DateTimeBuffer);
+  
+  // Convert to Epoch format and return result
+  return dateTimeToEpoch (_DateTimeBuffer, Timezone);
 }
 
 /* ------------------------------------------------------------------------------------------- */
@@ -998,16 +998,16 @@ uint32_t DS1390::getDateTimeEpoch (int Timezone)
 // Name:        setDateTimeEpoch
 // Description: Sets all time related register values in DS1390 memory from an Epoch timestamp
 // Arguments:   Epoch - Epoch timestamp
-//				      Timezone - Timezone info (-12 to +12, 0 = GMT) of Epoch
+//              Timezone - Timezone info (-12 to +12, 0 = GMT) of Epoch
 // Returns:     None
 
 void DS1390::setDateTimeEpoch(uint32_t Epoch, int Timezone)
 {
-	// Convert Epoch to DateTime
-	epochToDateTime (Epoch, _DateTimeBuffer, Timezone);
-	
-	// Write data to DS1390
-	setDateTimeAll(_DateTimeBuffer);
+  // Convert Epoch to DateTime
+  epochToDateTime (Epoch, _DateTimeBuffer, Timezone);
+  
+  // Write data to DS1390
+  setDateTimeAll(_DateTimeBuffer);
 }
 
 /* ------------------------------------------------------------------------------------------- */

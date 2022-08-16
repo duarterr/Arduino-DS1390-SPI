@@ -6,20 +6,20 @@
 // Date:    October 19, 2019
 //
 // Notes:   - A 200ms (min) delay is required after boot. It done inside the constructor
-//          - Hundredths of Seconds registers are ignored in Epoch related functions
-//      	- Works with DS1391 aswell.
-//      	- Alarm-related functions not implemented yet
+//          - Hundredths of Seconds register is ignored in Epoch related functions
+//          - Works with DS1391 aswell.
+//          - Alarm-related functions not implemented yet
 //
 // Knwon bugs:  - In 12h format, the device do not change the AM/PM bit neither increments
 //              the day of the week and day counters. Everything works in 24h mode
 //
 //              - Reading Hundredths of Seconds too often makes the device loose accuracy
 //
-// Changelog: 	v1.0 - 09/10/2019 - First release
-//        		v1.1 - 10/10/2019 - Century bit is now used for validation
-//        		v1.2 - 14/10/2019 - Bug fixes and Epoch timestamp related functions
-//				v1.3 - 17/10/2019 - Oscillator Stop Flag used for validation
-//				v1.4 - 19/10/2019 - Powerup delay occur only if necessary now
+// Changelog:   v1.0 - 09/10/2019 - First release
+//              v1.1 - 10/10/2019 - Century bit is now used for validation
+//              v1.2 - 14/10/2019 - Bug fixes and Epoch timestamp related functions
+//              v1.3 - 17/10/2019 - Oscillator Stop Flag used for validation
+//              v1.4 - 19/10/2019 - Powerup delay occur only if necessary now
 //
 // Released into the public domain
 /* ------------------------------------------------------------------------------------------- */
@@ -39,8 +39,8 @@
 /* ------------------------------------------------------------------------------------------- */
 
 // Code version
-#define DS1390_CODE_NAME		"DS1390_SPI"
-#define DS1390_CODE_VERSION		"1.4"
+#define DS1390_CODE_NAME        "DS1390_SPI"
+#define DS1390_CODE_VERSION     "1.4"
 
 // DS1390 SPI clock speed
 #define DS1390_SPI_CLOCK        4000000
@@ -101,7 +101,7 @@
 #define DS1390_MASK_AMPM        0x20  // AM/PM bit
 #define DS1390_MASK_FORMAT      0x40  // 12h/24h format bit
 #define DS1390_MASK_CENTURY     0x80  // Century bit
-#define DS1390_MASK_OSF     	0x80  // Oscillator stop flag bit
+#define DS1390_MASK_OSF         0x80  // Oscillator stop flag bit
 #define DS1390_MASK_AMX         0x80  // Alarm  bit (x = 1-4)
 #define DS1390_MASK_DYDT        0x40  // Alarm day/date bit
 
@@ -113,18 +113,18 @@
 /* ------------------------------------------------------------------------------------------- */
 
 // DS1390 date and time fields
-typedef struct  
-{ 
-  uint8_t Hsecond = 0;  // Hundredths of Seconds   
+typedef struct
+{
+  uint8_t Hsecond = 0;  // Hundredths of Seconds
   uint8_t Second = 0;   // Seconds
-  uint8_t Minute = 0;   // Minutes 
-  uint8_t Hour = 0;     // Hours 
+  uint8_t Minute = 0;   // Minutes
+  uint8_t Hour = 0;     // Hours
   uint8_t Wday = 0;     // Day of the week (1 = Sunday)
   uint8_t Day = 0;      // Day
   uint8_t Month = 0;    // Month
   uint16_t Year = 0;    // Year
   uint8_t AmPm = 0;     // AmPm flag - This field is set to 0 if 24h format is active
-  
+
 } DS1390DateTime;
 
 /* ------------------------------------------------------------------------------------------- */
@@ -146,44 +146,44 @@ class DS1390
     // Time format related functions
     uint8_t getTimeFormat ();
     bool setTimeFormat (uint8_t Format);
-	
-	// Data validation related functions
-	bool getValidation ();
-    void setValidation (); 
+
+    // Data validation related functions
+    bool getValidation ();
+    void setValidation ();
 
     // Date and time related functions
     void getDateTimeAll(DS1390DateTime &DateTime);
     void setDateTimeAll(DS1390DateTime &DateTime);
     uint8_t getDateTimeHSeconds ();
-    void setDateTimeHSeconds (uint8_t Value);    
+    void setDateTimeHSeconds (uint8_t Value);
     uint8_t getDateTimeSeconds ();
     bool setDateTimeSeconds (uint8_t Value);
     uint8_t getDateTimeMinutes ();
-    bool setDateTimeMinutes (uint8_t Value);     
+    bool setDateTimeMinutes (uint8_t Value);
     uint8_t getDateTimeHours ();
-    bool setDateTimeHours (uint8_t Value);         
+    bool setDateTimeHours (uint8_t Value);
     uint8_t getDateTimeWday ();
-    bool setDateTimeWday (uint8_t Value); 
+    bool setDateTimeWday (uint8_t Value);
     uint8_t getDateTimeDay ();
-    bool setDateTimeDay (uint8_t Value); 
+    bool setDateTimeDay (uint8_t Value);
     uint8_t getDateTimeMonth ();
-    bool setDateTimeMonth (uint8_t Value); 
+    bool setDateTimeMonth (uint8_t Value);
     uint16_t getDateTimeYear ();
-    bool setDateTimeYear (uint8_t Value);   
+    bool setDateTimeYear (uint8_t Value);
     uint8_t getDateTimeAmPm ();
-    bool setDateTimeAmPm (uint8_t Value);  
-	uint32_t getDateTimeEpoch (int Timezone);
-	void setDateTimeEpoch(uint32_t Epoch, int Timezone);
-                    
+    bool setDateTimeAmPm (uint8_t Value);
+    uint32_t getDateTimeEpoch (int Timezone);
+    void setDateTimeEpoch(uint32_t Epoch, int Timezone);
+
     // Trickle charger related functions
     uint8_t getTrickleChargerMode ();
     bool setTrickleChargerMode (uint8_t Mode);
-	
-	// Epoch timestamp related functions
-	uint32_t dateTimeToEpoch (DS1390DateTime &DateTime, int Timezone);
-	void epochToDateTime (uint32_t Epoch, DS1390DateTime &DateTime, int Timezone);
-	
-  private:  
+
+    // Epoch timestamp related functions
+    uint32_t dateTimeToEpoch (DS1390DateTime &DateTime, int Timezone);
+    void epochToDateTime (uint32_t Epoch, DS1390DateTime &DateTime, int Timezone);
+
+  private:
     // CS pin mask
     const uint16_t _PinCs;
 
@@ -200,8 +200,8 @@ class DS1390
 
     // Device memory related functions
     void writeByte (uint8_t Address, uint8_t Data);
-    uint8_t readByte (uint8_t Address); 
-    
+    uint8_t readByte (uint8_t Address);
+
     // Data conversion related functions
     static uint8_t dec2bcd (uint8_t DecValue);
     static uint8_t bcd2dec (uint8_t BCDValue);
