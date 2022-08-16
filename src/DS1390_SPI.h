@@ -113,7 +113,7 @@
 /* ------------------------------------------------------------------------------------------- */
 
 // DS1390 date and time fields
-typedef struct
+struct DS1390DateTime
 {
   uint8_t Hsecond = 0;  // Hundredths of Seconds
   uint8_t Second = 0;   // Seconds
@@ -124,8 +124,7 @@ typedef struct
   uint8_t Month = 0;    // Month
   uint16_t Year = 0;    // Year
   uint8_t AmPm = 0;     // AmPm flag - This field is set to 0 if 24h format is active
-
-} DS1390DateTime;
+};
 
 /* ------------------------------------------------------------------------------------------- */
 // DS1390 class
