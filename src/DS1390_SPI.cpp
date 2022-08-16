@@ -476,15 +476,34 @@ void DS1390::getDateTimeAll(DS1390DateTime &DateTime)
 
 /* ------------------------------------------------------------------------------------------- */
 
+// Name:        weekDayFromDate
+// Description: Calculates week day from the given date
+// Arguments:   DateTime - DS1390DateTime structure with a valid date
+// Returns:     Week day (1 = Sunday)
+
+uint8_t DS1390::weekDayFromDate (const DS1390DateTime &DateTime) {
+  static const char offsets[] PROGMEM = "-bed=pen+mad.";
+  const uint16_t y = DateTime.Year - DateTime.Month < 3;
+  return (y + y/4 - y/100 + y/400 + pgm_read_byte(&offsets[DateTime.Month]) + DateTime.Day) % 7 + 1;
+}
+
+/* ------------------------------------------------------------------------------------------- */
+
 // Name:        setDateTimeAll
 // Description: Sets all time related register values in DS1390 memory
 // Arguments:   DateTime - DS1390DateTime structure with the data to be written
+//              Wday if set to 0 will be calculated automatically.
 // Returns:     None
 
 void DS1390::setDateTimeAll(DS1390DateTime &DateTime)
 {
   // Struck to store raw data to be written
   DS1390DateTime Buffer;
+
+  // Calculates week day if not set
+  if (DateTime.Wday == 0) {
+	  DateTime.Wday = weekDayFromDate(DateTime);
+  }
 
   // Prepares buffer - Constrain values within allowed limits
   Buffer.Hsecond = dec2bcd(constrain(DateTime.Hsecond, 0, 99));

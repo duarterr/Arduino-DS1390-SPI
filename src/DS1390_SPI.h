@@ -193,10 +193,11 @@ class DS1390
     // DateTime buffer
     DS1390DateTime _DateTimeBuffer;
 
-    // Year related functions
+    // Date calculation related functions
     uint16_t getCenturyBase (bool Century) const;
     uint8_t getDateTimeCentury ();
     void setDateTimeCentury (bool Value);
+    static uint8_t weekDayFromDate (const DS1390DateTime &DateTime);
 
     // Device memory related functions
     void writeByte (uint8_t Address, uint8_t Data);
