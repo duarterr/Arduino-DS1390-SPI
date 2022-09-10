@@ -2,15 +2,13 @@
 
 ## Usage
 
-All date and time values can be stored in a "DS1390DateTime" struct. This struct is defined in the header file.
+All date and time values can be stored in a `DS1390DateTime` struct. This struct is defined in the header file.
 
-All parameters that can be passed as arguments to functions expect to receive values defined in the header file. Ex: To disable the trickle charger, call the function "setTrickleChargerMode" and pass DS1390_TCH_DISABLE as argument. 
+All parameters that can be passed as arguments to functions expect to receive values defined in the header file. Ex: To disable the trickle charger, call the function `setTrickleChargerMode` and pass `DS1390_TCH_DISABLE` as argument. 
 
 ## Notes
 
 A 200ms (min) delay is required after boot. It done inside the constructor.
-
-Epoch related functions assume year is higher than 2000.
 
 Century and Hundredths of Seconds registers are ignored in Epoch related functions
 

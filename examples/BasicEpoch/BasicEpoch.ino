@@ -54,22 +54,25 @@ void setup()
   while (!Serial);
 
   Serial.println();
-  Serial.printf ("%s library v%s \n", DS1390_CODE_NAME, DS1390_CODE_VERSION); 
+  Serial.printf ("%s library v%s \n", DS1390_CODE_NAME, DS1390_CODE_VERSION);
 
   /* ----------------------------------------------------------------------------------------- */
+
+  // Initialize hardware
+  Clock.begin();
 
   // Checkif memory was lost recently
   if (Clock.getValidation () == true)
     Serial.println ("Memory content is valid.");
   else
     Serial.println ("Memory content was recently lost! Please update date and time values.");
-    
+
   // Configure trickle carger (250 ohms with one series diode)
   Clock.setTrickleChargerMode (DS1390_TCH_250_D);
 
   // Set time format - 24h
   //Clock.setTimeFormat(DS1390_FORMAT_24H);
-  
+
   // Get current format to confirm configuration
   if (Clock.getTimeFormat() == DS1390_FORMAT_24H)
     Serial.println ("Format: 24h");
@@ -87,7 +90,7 @@ void setup()
 /* ------------------------------------------------------------------------------------------- */
 
 void loop()
-{ 
+{
   // Get Epoch time from DS1390
   unsigned long Epoch = Clock.getDateTimeEpoch (TIMEZONE);
   Serial.printf ("Epoch: %d \n", Epoch);
@@ -97,35 +100,35 @@ void loop()
 
   // Display result
   Serial.printf ("DateTime: ");
-  
+
   switch (Time.Wday)
   {
     case 1:
       Serial.printf ("Sun, ");
       break;
     case 2:
-      Serial.printf ("Mon, "); 
+      Serial.printf ("Mon, ");
       break;
     case 3:
-      Serial.printf ("Tue, "); 
+      Serial.printf ("Tue, ");
       break;
     case 4:
       Serial.printf ("Wed, ");
-      break; 
+      break;
     case 5:
       Serial.printf ("Thu, ");
       break;
     case 6:
-      Serial.printf ("Fry, "); 
-      break; 
+      Serial.printf ("Fri, ");
+      break;
     case 7:
       Serial.printf ("Sat, ");
-      break;                               
+      break;
   }
 
   Serial.printf ("%02d/%02d/20%02d - %02d:%02d:%02d \n", Time.Day, Time.Month, Time.Year, Time.Hour, Time.Minute, Time.Second);
   //Serial.printf ("AM/PM: %d \n", Time.AmPm);
-  
+
   delay (1000);
 }
 

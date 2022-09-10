@@ -6,21 +6,20 @@
 // Date:    October 19, 2019
 //
 // Notes:   - A 200ms (min) delay is required after boot. It done inside the constructor
-//      	- Epoch related functions assume year is higher than 2000.
-//			- Century and Hundredths of Seconds registers are ignored in Epoch related functions
-//      	- Works with DS1391 aswell.
-//      	- Alarm-related functions not implemented yet
+//          - Hundredths of Seconds register is ignored in Epoch related functions
+//          - Works with DS1391 aswell.
+//          - Alarm-related functions not implemented yet
 //
 // Knwon bugs:  - In 12h format, the device do not change the AM/PM bit neither increments
 //              the day of the week and day counters. Everything works in 24h mode
 //
 //              - Reading Hundredths of Seconds too often makes the device loose accuracy
 //
-// Changelog: 	v1.0 - 09/10/2019 - First release
-//        		v1.1 - 10/10/2019 - Century bit is now used for validation
-//        		v1.2 - 14/10/2019 - Bug fixes and Epoch timestamp related functions
-//				v1.3 - 17/10/2019 - Oscillator Stop Flag used for validation
-//				v1.4 - 19/10/2019 - Powerup delay occur only if necessary now
+// Changelog:   v1.0 - 09/10/2019 - First release
+//              v1.1 - 10/10/2019 - Century bit is now used for validation
+//              v1.2 - 14/10/2019 - Bug fixes and Epoch timestamp related functions
+//              v1.3 - 17/10/2019 - Oscillator Stop Flag used for validation
+//              v1.4 - 19/10/2019 - Powerup delay occur only if necessary now
 //
 // Released into the public domain
 /* ------------------------------------------------------------------------------------------- */
@@ -34,14 +33,22 @@
 #include "DS1390_SPI.h"
 
 /* ------------------------------------------------------------------------------------------- */
-// Constructor
+// Constants
+/* ------------------------------------------------------------------------------------------- */
+// Duration of months of the year
+static const uint8_t _MonthDuration[] PROGMEM = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+/* ------------------------------------------------------------------------------------------- */
+// Functions definitions
 /* ------------------------------------------------------------------------------------------- */
 
-DS1390::DS1390(unsigned int PinCs)
-{
-  // Save CS pin bitmask
-  _PinCs = PinCs;
+// Name:        begin
+// Description: Initializes hardware
+// Arguments:   Wait - disabling it allows user to use a different method
+// Returns:     none
 
+void DS1390::begin (bool Wait)
+{
   // Set chip select pin as output
   pinMode (_PinCs, OUTPUT);
 
@@ -49,14 +56,13 @@ DS1390::DS1390(unsigned int PinCs)
   digitalWrite (_PinCs, HIGH);
 
   // A 200ms powerup delay is mandatory for DS1391
-  while (millis () < 200);
-  
+  if (Wait)
+    delay (200);
+
   // Start SPI bus
   SPI.begin ();
 }
 
-/* ------------------------------------------------------------------------------------------- */
-// Functions definitions
 /* ------------------------------------------------------------------------------------------- */
 
 // Name:        dec2bcd
@@ -64,7 +70,7 @@ DS1390::DS1390(unsigned int PinCs)
 // Arguments:   DecValue - Value to be converted
 // Returns:     Value in BCD format
 
-unsigned char DS1390::dec2bcd (unsigned char DecValue)
+uint8_t DS1390::dec2bcd (uint8_t DecValue)
 {
   return (((DecValue / 10) << 4) | (DecValue % 10));
 }
@@ -76,7 +82,7 @@ unsigned char DS1390::dec2bcd (unsigned char DecValue)
 // Arguments:   BCDValue - Value to be converted
 // Returns:     Value in decimal format
 
-unsigned char DS1390::bcd2dec (unsigned char BCDValue)
+uint8_t DS1390::bcd2dec (uint8_t BCDValue)
 {
   return ((((BCDValue >> 4) & 0x0F) * 10) + (BCDValue & 0x0F));
 }
@@ -89,7 +95,7 @@ unsigned char DS1390::bcd2dec (unsigned char BCDValue)
 //              Data - Byte to be written
 // Returns:     none
 
-void DS1390::writeByte(unsigned char Address, unsigned char Data)
+void DS1390::writeByte(uint8_t Address, uint8_t Data)
 {
   // Configure SPI transaction
   SPI.beginTransaction(SPISettings(DS1390_SPI_CLOCK, MSBFIRST, SPI_MODE1));
@@ -117,10 +123,10 @@ void DS1390::writeByte(unsigned char Address, unsigned char Data)
 // Arguments:   Address - Register to be read
 // Returns:     Byte read
 
-unsigned char DS1390::readByte (unsigned char Address)
+uint8_t DS1390::readByte (uint8_t Address)
 {
   // Data byte
-  unsigned char Data = 0;
+  uint8_t Data = 0;
 
   // Configure SPI transaction
   SPI.beginTransaction(SPISettings(DS1390_SPI_CLOCK, MSBFIRST, SPI_MODE1));
@@ -149,36 +155,36 @@ unsigned char DS1390::readByte (unsigned char Address)
 // Name:        dateTimeToEpoch
 // Description: Converts DS1390DateTime structure to Epoch timestamp - Ignores hundredths of sec.
 // Arguments:   DateTime - DS1390DateTime structure with the data
-//				      Timezone - Timezone info (-12 to +12, 0 = GMT) of DateTime
+//              Timezone - Timezone info (-12 to +12, 0 = GMT) of DateTime
 // Returns:     Epoch timestamp referred to Timezone
 
-unsigned long DS1390::dateTimeToEpoch (DS1390DateTime &DateTime, int Timezone)
+uint32_t DS1390::dateTimeToEpoch (DS1390DateTime &DateTime, int Timezone)
 {
   // Seconds since 00:00:00 - Jan 1, 1970 GMT
-  double Epoch = 0;
+  uint32_t Epoch = 0;
 
   // Counter
-  unsigned int Counter = 0;
+  uint16_t Counter = 0;
 
-  // Epoch time starts in 1970 - Assumes current time is after 2000
-  DateTime.Year += 30;
+  // Epoch time starts in 1970
+  uint16_t EpochYear = DateTime.Year - 1970;
 
   // 12h mode
   if ((getTimeFormat() == DS1390_FORMAT_12H) && (DateTime.AmPm == DS1390_PM))
     DateTime.Hour += 12;
-    
+
   // Correct value for given timezone
   if (Timezone != 0)
   {
     long Correction = (constrain(Timezone, -12, 12) * -3600);
-    Epoch += Correction; 
+    Epoch += Correction;
   }
-  
+
   // Seconds from 1970 until 1 jan 00:00:00 of the given year
-  Epoch += DateTime.Year * (86400 * 365); // 31536000 seconds per year
+  Epoch += EpochYear * (86400 * 365); // 31536000 seconds per year
 
   // Add extra days for leap years
-  for (Counter = 0; Counter < DateTime.Year; Counter++)
+  for (Counter = 0; Counter < EpochYear; Counter++)
   {
     if (LEAP_YEAR(Counter))
       Epoch += 86400;
@@ -188,16 +194,16 @@ unsigned long DS1390::dateTimeToEpoch (DS1390DateTime &DateTime, int Timezone)
   for (Counter = 1; Counter < DateTime.Month; Counter++)
   {
     // February - Leap year
-    if ((Counter == 2) && LEAP_YEAR(DateTime.Year))
+    if ((Counter == 2) && LEAP_YEAR(EpochYear))
       Epoch += (86400 * 29); // 29 days
-    
+
     else
-      Epoch += 86400 * _MonthDuration[Counter - 1];
+      Epoch += 86400 * pgm_read_byte(&_MonthDuration[Counter - 1]);
   }
 
   // Add days for given month
   Epoch += (DateTime.Day - 1) * 86400; // 86400 seconds per day
-  Epoch += DateTime.Hour * 3600;	// 3600 seconds per hour
+  Epoch += DateTime.Hour * 3600; // 3600 seconds per hour
   Epoch += DateTime.Minute * 60; // 60 seconds per minute
   Epoch += DateTime.Second;
 
@@ -210,23 +216,23 @@ unsigned long DS1390::dateTimeToEpoch (DS1390DateTime &DateTime, int Timezone)
 // Name:        epochToDateTime
 // Description: Converts Epoch timestamp to DS1390DateTime structure - Ignores hundredths of sec.
 // Arguments:   Epoch - Epoch timestamp
-//				      DateTime - DS1390DateTime structure to store the data
-//				      Timezone - Timezone info (-12 to +12, 0 = GMT) of Epoch
+//              DateTime - DS1390DateTime structure to store the data
+//              Timezone - Timezone info (-12 to +12, 0 = GMT) of Epoch
 // Returns:     None
 
-void DS1390::epochToDateTime (unsigned long Epoch, DS1390DateTime &DateTime, int Timezone)
+void DS1390::epochToDateTime (uint32_t Epoch, DS1390DateTime &DateTime, int Timezone)
 {
   // Variables
-  unsigned long EpochTime = Epoch;
-  unsigned char Year = 0;
-  unsigned char Month = 0;
-  unsigned char MonthLength = 0;
-  unsigned long Days = 0;
+  uint32_t EpochTime = Epoch;
+  uint8_t Year = 0;
+  uint8_t Month = 0;
+  uint8_t MonthLength = 0;
+  uint32_t Days = 0;
 
   // Correct value for given timezone
   if (Timezone != 0)
     EpochTime += (Timezone * 3600);
-  
+
   // Calculate seconds
   DateTime.Second = EpochTime % 60;
 
@@ -269,7 +275,7 @@ void DS1390::epochToDateTime (unsigned long Epoch, DS1390DateTime &DateTime, int
     else
     {
       DateTime.Hour -= 12;
-      DateTime.AmPm = DS1390_PM;      
+      DateTime.AmPm = DS1390_PM;
     }
   }
 
@@ -277,10 +283,10 @@ void DS1390::epochToDateTime (unsigned long Epoch, DS1390DateTime &DateTime, int
   EpochTime /= 24;
 
   // Get weekday
-  DateTime.Wday = ((EpochTime + 4) % 7) + 1;  // Sunday is day 1 
+  DateTime.Wday = ((EpochTime + 4) % 7) + 1;  // Sunday is day 1
 
   // Calculate years since 1970
-  while((unsigned)(Days += (LEAP_YEAR(Year) ? 366 : 365)) <= EpochTime) 
+  while((unsigned)(Days += (LEAP_YEAR(Year) ? 366 : 365)) <= EpochTime)
     Year++;
 
   // Get absolute value
@@ -292,25 +298,25 @@ void DS1390::epochToDateTime (unsigned long Epoch, DS1390DateTime &DateTime, int
   EpochTime -= Days;
 
   // Calculate month duration
-  for (Month = 0; Month < 12; Month++) 
+  for (Month = 0; Month < 12; Month++)
   {
     // February
-    if (Month == 1) 
-    { 
-      if (LEAP_YEAR(Year)) 
+    if (Month == 1)
+    {
+      if (LEAP_YEAR(Year))
         MonthLength = 29;
-      
-      else 
+
+      else
         MonthLength = 28;
-    } 
-    
-    else 
-      MonthLength = _MonthDuration [Month];
-    
-    if (EpochTime >= MonthLength) 
+    }
+
+    else
+      MonthLength = pgm_read_byte(&_MonthDuration[Month]);
+
+    if (EpochTime >= MonthLength)
       EpochTime -= MonthLength;
-    
-    else 
+
+    else
       break;
   }
 
@@ -318,7 +324,7 @@ void DS1390::epochToDateTime (unsigned long Epoch, DS1390DateTime &DateTime, int
   DateTime.Month = Month + 1;
 
   // Calculate day
-  DateTime.Day = EpochTime + 1; 
+  DateTime.Day = EpochTime + 1;
 }
 
 /* ------------------------------------------------------------------------------------------- */
@@ -357,7 +363,7 @@ void DS1390::setValidation ()
 // Arguments:   None
 // Returns:     DS1390_FORMAT_24H (logic 0) or DS1390_FORMAT_12H (logic 1)
 
-unsigned char DS1390::getTimeFormat ()
+uint8_t DS1390::getTimeFormat ()
 {
   // Return format bit of Hours register
   return ((readByte (DS1390_ADDR_READ_HRS) & DS1390_MASK_FORMAT) >> 6);
@@ -370,10 +376,10 @@ unsigned char DS1390::getTimeFormat ()
 // Arguments:   DS1390_FORMAT_24H (logic 0) or DS1390_FORMAT_12H (logic 1)
 // Returns:     false if new format is equal to current or true on completion
 
-bool DS1390::setTimeFormat (unsigned char Format)
+bool DS1390::setTimeFormat (uint8_t Format)
 {
   // Current value stored on Hours register
-  unsigned char HrsReg = readByte(DS1390_ADDR_READ_HRS);
+  uint8_t HrsReg = readByte(DS1390_ADDR_READ_HRS);
 
   // Check if new format is equal to current
   if (Format == ((HrsReg & DS1390_MASK_FORMAT) >> 6))
@@ -397,6 +403,18 @@ bool DS1390::setTimeFormat (unsigned char Format)
 
   // Success
   return true;
+}
+
+/* ------------------------------------------------------------------------------------------- */
+
+// Name:        getCenturyBase
+// Description: Calculates century base (__00)
+// Arguments:   Century - RTC century bit
+// Returns:     Current century year
+
+uint16_t DS1390::getCenturyBase (bool Century) const
+{
+  return _YearBase + (Century ? 100u : 0u);
 }
 
 /* ------------------------------------------------------------------------------------------- */
@@ -457,8 +475,20 @@ void DS1390::getDateTimeAll(DS1390DateTime &DateTime)
   DateTime.Wday = bcd2dec(Buffer.Wday);
   DateTime.Day = bcd2dec(Buffer.Day);
   DateTime.Month = bcd2dec(Buffer.Month & 0x1F); // Ignore Century bit
-  DateTime.Year = bcd2dec(Buffer.Year);
-  DateTime.Century = ((Buffer.Month & DS1390_MASK_CENTURY) >> 7);
+  DateTime.Year = bcd2dec(Buffer.Year) + getCenturyBase(Buffer.Month & DS1390_MASK_CENTURY);
+}
+
+/* ------------------------------------------------------------------------------------------- */
+
+// Name:        weekDayFromDate
+// Description: Calculates week day from the given date
+// Arguments:   DateTime - DS1390DateTime structure with a valid date
+// Returns:     Week day (1 = Sunday)
+
+uint8_t DS1390::weekDayFromDate (const DS1390DateTime &DateTime) {
+  static const char offsets[] PROGMEM = "-bed=pen+mad.";
+  const uint16_t y = DateTime.Year - DateTime.Month < 3;
+  return (y + y/4 - y/100 + y/400 + pgm_read_byte(&offsets[DateTime.Month]) + DateTime.Day) % 7 + 1;
 }
 
 /* ------------------------------------------------------------------------------------------- */
@@ -466,20 +496,27 @@ void DS1390::getDateTimeAll(DS1390DateTime &DateTime)
 // Name:        setDateTimeAll
 // Description: Sets all time related register values in DS1390 memory
 // Arguments:   DateTime - DS1390DateTime structure with the data to be written
+//              Wday if set to 0 will be calculated automatically.
 // Returns:     None
 
-void DS1390::setDateTimeAll(DS1390DateTime &DateTime)
+void DS1390::setDateTimeAll(const DS1390DateTime &DateTime)
 {
   // Struck to store raw data to be written
   DS1390DateTime Buffer;
+
+  // Calculates week day if not set
+  uint8_t Wday = DateTime.Wday;
+  if (Wday == 0) {
+	  Wday = weekDayFromDate(DateTime);
+  }
 
   // Prepares buffer - Constrain values within allowed limits
   Buffer.Hsecond = dec2bcd(constrain(DateTime.Hsecond, 0, 99));
   Buffer.Second = dec2bcd(constrain(DateTime.Second, 0, 59));
   Buffer.Minute = dec2bcd(constrain(DateTime.Minute, 0, 59));
-  Buffer.Wday = dec2bcd(constrain(DateTime.Wday, 1, 7));
+  Buffer.Wday = dec2bcd(constrain(Wday, 1, 7));
   Buffer.Day = dec2bcd(constrain(DateTime.Day, 1, 31));
-  Buffer.Year = dec2bcd(constrain(DateTime.Year, 0, 99));
+  Buffer.Year = dec2bcd(DateTime.Year % 100);
 
   // 24h mode
   if (getTimeFormat() == DS1390_FORMAT_24H)
@@ -490,7 +527,8 @@ void DS1390::setDateTimeAll(DS1390DateTime &DateTime)
     Buffer.Hour = dec2bcd(constrain(DateTime.Hour, 1, 12)) | (DateTime.AmPm << 5) | DS1390_MASK_FORMAT;
 
   // Store Century info in Century bit of Month register
-  Buffer.Month = dec2bcd(constrain(DateTime.Month, 1, 12)) | (DateTime.Century << 7);  
+  const uint8_t Century = DateTime.Year >= getCenturyBase(true);
+  Buffer.Month = dec2bcd(constrain(DateTime.Month, 1, 12)) | (Century << 7);
 
   // Configure SPI transaction
   SPI.beginTransaction(SPISettings(DS1390_SPI_CLOCK, MSBFIRST, SPI_MODE1));
@@ -516,9 +554,9 @@ void DS1390::setDateTimeAll(DS1390DateTime &DateTime)
 
   // End SPI transaction
   SPI.endTransaction();
-  
+
   // Set validation bit
-  setValidation ();  
+  setValidation ();
 }
 
 /* ------------------------------------------------------------------------------------------- */
@@ -528,7 +566,7 @@ void DS1390::setDateTimeAll(DS1390DateTime &DateTime)
 // Arguments:   None
 // Returns:     Hundredths of seconds
 
-unsigned char DS1390::getDateTimeHSeconds ()
+uint8_t DS1390::getDateTimeHSeconds ()
 {
   // Return register value
   return (bcd2dec(readByte(DS1390_ADDR_READ_HSEC)));
@@ -541,7 +579,7 @@ unsigned char DS1390::getDateTimeHSeconds ()
 // Arguments:   Hundredths of seconds (constrained between 0 and 99)
 // Returns:     none
 
-void DS1390::setDateTimeHSeconds (unsigned char Value)
+void DS1390::setDateTimeHSeconds (uint8_t Value)
 {
   // Constrain value within allowed limits and send to DS1390
   writeByte (DS1390_ADDR_WRITE_HSEC, dec2bcd(constrain(Value, 0, 99)));
@@ -557,7 +595,7 @@ void DS1390::setDateTimeHSeconds (unsigned char Value)
 // Arguments:   None
 // Returns:     Seconds
 
-unsigned char DS1390::getDateTimeSeconds ()
+uint8_t DS1390::getDateTimeSeconds ()
 {
   // Return register value
   return (bcd2dec(readByte(DS1390_ADDR_READ_SEC)));
@@ -570,7 +608,7 @@ unsigned char DS1390::getDateTimeSeconds ()
 // Arguments:   Seconds (constrained between 0 and 59)
 // Returns:     false if new value is equal to current or true on completion
 
-bool DS1390::setDateTimeSeconds (unsigned char Value)
+bool DS1390::setDateTimeSeconds (uint8_t Value)
 {
   // Check if new value is equal to current
   if (Value == getDateTimeSeconds())
@@ -593,7 +631,7 @@ bool DS1390::setDateTimeSeconds (unsigned char Value)
 // Arguments:   None
 // Returns:     Minutes
 
-unsigned char DS1390::getDateTimeMinutes ()
+uint8_t DS1390::getDateTimeMinutes ()
 {
   // Return register value
   return (bcd2dec(readByte(DS1390_ADDR_READ_MIN)));
@@ -606,7 +644,7 @@ unsigned char DS1390::getDateTimeMinutes ()
 // Arguments:   Minutes (constrained between 0 and 59)
 // Returns:     false if new value is equal to current or true on completion
 
-bool DS1390::setDateTimeMinutes (unsigned char Value)
+bool DS1390::setDateTimeMinutes (uint8_t Value)
 {
   // Check if new value is equal to current
   if (Value == getDateTimeMinutes())
@@ -629,10 +667,10 @@ bool DS1390::setDateTimeMinutes (unsigned char Value)
 // Arguments:   None
 // Returns:     Hours
 
-unsigned char DS1390::getDateTimeHours ()
+uint8_t DS1390::getDateTimeHours ()
 {
   // Get current value
-  unsigned char Buffer = readByte(DS1390_ADDR_READ_HRS);
+  uint8_t Buffer = readByte(DS1390_ADDR_READ_HRS);
 
   // Convert hours - 24h format
   if (((Buffer & DS1390_MASK_FORMAT) >> 5) ==  DS1390_FORMAT_24H)
@@ -653,7 +691,7 @@ unsigned char DS1390::getDateTimeHours ()
 // Arguments:   Hours (constrained between 0 and 23 in 24h format or 1 and 12 in 12h format)
 // Returns:     false if new value is equal to current or true on completion
 
-bool DS1390::setDateTimeHours (unsigned char Value)
+bool DS1390::setDateTimeHours (uint8_t Value)
 {
   // Check if new value is equal to current
   if (Value == getDateTimeHours())
@@ -666,8 +704,8 @@ bool DS1390::setDateTimeHours (unsigned char Value)
   // 12h mode - Store AmPm info in AmPm bit of Hour register and make sure format bit is 1
   else
   {
-    unsigned char AmPm = (readByte(DS1390_ADDR_READ_HRS) & DS1390_MASK_AMPM) >> 5;
-    Value = dec2bcd(constrain(Value, 1, 12)) | (AmPm << 5) | DS1390_MASK_FORMAT;
+    uint8_t AmPmFlag = readByte(DS1390_ADDR_READ_HRS) & DS1390_MASK_AMPM;
+    Value = dec2bcd(constrain(Value, 1, 12)) | AmPmFlag | DS1390_MASK_FORMAT;
   }
 
   // Send value to DS1390
@@ -687,7 +725,7 @@ bool DS1390::setDateTimeHours (unsigned char Value)
 // Arguments:   None
 // Returns:     Day of the week
 
-unsigned char DS1390::getDateTimeWday ()
+uint8_t DS1390::getDateTimeWday ()
 {
   // Return register value
   return (bcd2dec(readByte(DS1390_ADDR_READ_WDAY)));
@@ -700,7 +738,7 @@ unsigned char DS1390::getDateTimeWday ()
 // Arguments:   Day of the week (constrained between 1 and 7)
 // Returns:     false if new value is equal to current or true on completion
 
-bool DS1390::setDateTimeWday (unsigned char Value)
+bool DS1390::setDateTimeWday (uint8_t Value)
 {
   // Check if new value is equal to current
   if (Value == getDateTimeWday())
@@ -723,7 +761,7 @@ bool DS1390::setDateTimeWday (unsigned char Value)
 // Arguments:   None
 // Returns:     Day
 
-unsigned char DS1390::getDateTimeDay ()
+uint8_t DS1390::getDateTimeDay ()
 {
   // Return register value
   return (bcd2dec(readByte(DS1390_ADDR_READ_DAY)));
@@ -736,7 +774,7 @@ unsigned char DS1390::getDateTimeDay ()
 // Arguments:   Day (constrained between 1 and 31)
 // Returns:     false if new value is equal to current or true on completion
 
-bool DS1390::setDateTimeDay (unsigned char Value)
+bool DS1390::setDateTimeDay (uint8_t Value)
 {
   // Check if new value is equal to current
   if (Value == getDateTimeDay())
@@ -759,7 +797,7 @@ bool DS1390::setDateTimeDay (unsigned char Value)
 // Arguments:   None
 // Returns:     Month
 
-unsigned char DS1390::getDateTimeMonth ()
+uint8_t DS1390::getDateTimeMonth ()
 {
   // Return register value
   return (bcd2dec(readByte(DS1390_ADDR_READ_MON) & 0x1F));
@@ -772,23 +810,23 @@ unsigned char DS1390::getDateTimeMonth ()
 // Arguments:   Month (constrained between 1 and 12)
 // Returns:     false if new value is equal to current or true on completion
 
-bool DS1390::setDateTimeMonth (unsigned char Value)
+bool DS1390::setDateTimeMonth (uint8_t Value)
 {
   // Check if new value is equal to current
   if (Value == getDateTimeMonth())
     return false;
 
   // Century flag
-  unsigned char Century = ((readByte(DS1390_ADDR_READ_MON) & DS1390_MASK_CENTURY) >> 7);
-  
+  uint8_t Century = ((readByte(DS1390_ADDR_READ_MON) & DS1390_MASK_CENTURY) >> 7);
+
   // Store Century info in Century bit of Month register
-  Value = dec2bcd(constrain(Value, 1, 12)) | (Century << 7);  
+  Value = dec2bcd(constrain(Value, 1, 12)) | (Century << 7);
 
   // Send value to DS1390
   writeByte (DS1390_ADDR_WRITE_MON, Value);
-  
+
   // Set validation bit
-  setValidation ();  
+  setValidation ();
 
   // Success
   return true;
@@ -801,27 +839,29 @@ bool DS1390::setDateTimeMonth (unsigned char Value)
 // Arguments:   None
 // Returns:     Year
 
-unsigned char DS1390::getDateTimeYear ()
+uint16_t DS1390::getDateTimeYear ()
 {
   // Return register value
-  return (bcd2dec(readByte(DS1390_ADDR_READ_YRS)));
+  const uint16_t CenturyBase = getCenturyBase(getDateTimeCentury());
+  return bcd2dec(readByte(DS1390_ADDR_READ_YRS)) + CenturyBase;
 }
 
 /* ------------------------------------------------------------------------------------------- */
 
 // Name:        setDateTimeYear
 // Description: Sets year in DS1390 memory
-// Arguments:   Year (constrained between 0 and 99)
+// Arguments:   Year
 // Returns:     false if new value is equal to current or true on completion
 
-bool DS1390::setDateTimeYear (unsigned char Value)
+bool DS1390::setDateTimeYear (uint16_t Value)
 {
   // Check if new value is equal to current
   if (Value == getDateTimeYear())
     return false;
 
   // Constrain value within allowed limits and send to DS1390
-  writeByte (DS1390_ADDR_WRITE_YRS, dec2bcd(constrain(Value, 0, 99)));
+  writeByte (DS1390_ADDR_WRITE_YRS, dec2bcd(Value % 100));
+  setDateTimeCentury (Value >= getCenturyBase(true));
 
   // Set validation bit
   setValidation ();
@@ -837,7 +877,7 @@ bool DS1390::setDateTimeYear (unsigned char Value)
 // Arguments:   None
 // Returns:     DS1390_AM (logic 0) or DS1390_PM (logic 1) - Returns 0 if format is set to 24h
 
-unsigned char DS1390::getDateTimeAmPm ()
+uint8_t DS1390::getDateTimeAmPm ()
 {
   // 24h mode
   if (getTimeFormat() == DS1390_FORMAT_24H)
@@ -854,7 +894,7 @@ unsigned char DS1390::getDateTimeAmPm ()
 // Arguments:   DS1390_AM (logic 0) or DS1390_PM (logic 1)
 // Returns:     false if new value is equal to current or format is set to 24h or true on completion
 
-bool DS1390::setDateTimeAmPm (unsigned char Value)
+bool DS1390::setDateTimeAmPm (uint8_t Value)
 {
   // Check if device is in 24h mode
   if (getTimeFormat() == DS1390_FORMAT_24H)
@@ -869,7 +909,7 @@ bool DS1390::setDateTimeAmPm (unsigned char Value)
     return false;
 
   // 12h mode - Store value in AmPm bit of Hour register and make sure format bit is 1
-  unsigned char BufferHrs = dec2bcd(getDateTimeHours()) | (Value << 5) | DS1390_MASK_FORMAT;
+  uint8_t BufferHrs = dec2bcd(getDateTimeHours()) | (Value << 5) | DS1390_MASK_FORMAT;
 
   // Send value to DS1390
   writeByte (DS1390_ADDR_WRITE_HRS, BufferHrs);
@@ -886,38 +926,25 @@ bool DS1390::setDateTimeAmPm (unsigned char Value)
 // Name:        getDateTimeCentury
 // Description: Gets century flag from DS1390 memory
 // Arguments:   None
-// Returns:     Century
+// Returns:     Century flag
 
-unsigned char DS1390::getDateTimeCentury ()
+uint8_t DS1390::getDateTimeCentury ()
 {
   // Return century flag
-  return ((readByte(DS1390_ADDR_READ_MON) & DS1390_MASK_CENTURY) >> 7);
+  return readByte(DS1390_ADDR_READ_MON) & DS1390_MASK_CENTURY;
 }
 
 /* ------------------------------------------------------------------------------------------- */
 
 // Name:        setDateTimeCentury
 // Description: Sets century flag in DS1390 memory
-// Arguments:   Century (constrained between 0 and 1)
-// Returns:     false if new value is equal to current or true on completion
+// Arguments:   Shifted century flag (0 or 1)
+// Returns:     none
 
-bool DS1390::setDateTimeCentury (unsigned char Value)
+void DS1390::setDateTimeCentury (bool Value)
 {
-  // Check if new value is equal to current
-  if (Value == getDateTimeCentury())
-    return false;
-
-  // Get current month 
-  unsigned char BufferMonth = getDateTimeMonth();
-
   // Constrain value within allowed limits and send to DS1390
-  writeByte (DS1390_ADDR_WRITE_MON, (dec2bcd(getDateTimeMonth()) | (constrain(Value, 0, 1) << 7)));
-  
-  // Set validation bit
-  setValidation ();  
-  
-  // Success
-  return true;  
+  writeByte (DS1390_ADDR_WRITE_MON, (dec2bcd(getDateTimeMonth()) | ((uint8_t)Value << 7)));
 }
 
 /* ------------------------------------------------------------------------------------------- */
@@ -933,7 +960,7 @@ bool DS1390::setDateTimeCentury (unsigned char Value)
 //              DS1390_TCH_4K_NO_D  - 4 kOhms without diode
 //              DS1390_TCH_4K_D     - 4 kOhms with diode
 
-unsigned char DS1390::getTrickleChargerMode ()
+uint8_t DS1390::getTrickleChargerMode ()
 {
   // Return Tch register value
   return (readByte (DS1390_ADDR_READ_TCH));
@@ -952,7 +979,7 @@ unsigned char DS1390::getTrickleChargerMode ()
 //              DS1390_TCH_4K_D     - 4 kOhms with diode
 // Returns:     false if new mode is equal to current or true on completion
 
-bool DS1390::setTrickleChargerMode (unsigned char Mode)
+bool DS1390::setTrickleChargerMode (uint8_t Mode)
 {
   // Check if new mode is equal to current
   if (Mode == getTrickleChargerMode())
@@ -981,13 +1008,13 @@ bool DS1390::setTrickleChargerMode (unsigned char Mode)
 // Arguments:   Timezone - Timezone info (-12 to +12, 0 = GMT) to calculate Epoch
 // Returns:     Epoch timestamp
 
-unsigned long DS1390::getDateTimeEpoch (int Timezone)
+uint32_t DS1390::getDateTimeEpoch (int Timezone)
 {
-	// Get date and time from DS1390 memory
-	getDateTimeAll(_DateTimeBuffer);
-	
-	// Convert to Epoch format and return result
-	return dateTimeToEpoch (_DateTimeBuffer, Timezone);
+  // Get date and time from DS1390 memory
+  getDateTimeAll(_DateTimeBuffer);
+  
+  // Convert to Epoch format and return result
+  return dateTimeToEpoch (_DateTimeBuffer, Timezone);
 }
 
 /* ------------------------------------------------------------------------------------------- */
@@ -995,16 +1022,16 @@ unsigned long DS1390::getDateTimeEpoch (int Timezone)
 // Name:        setDateTimeEpoch
 // Description: Sets all time related register values in DS1390 memory from an Epoch timestamp
 // Arguments:   Epoch - Epoch timestamp
-//				      Timezone - Timezone info (-12 to +12, 0 = GMT) of Epoch
+//              Timezone - Timezone info (-12 to +12, 0 = GMT) of Epoch
 // Returns:     None
 
-void DS1390::setDateTimeEpoch(unsigned long Epoch, int Timezone)
+void DS1390::setDateTimeEpoch(uint32_t Epoch, int Timezone)
 {
-	// Convert Epoch to DateTime
-	epochToDateTime (Epoch, _DateTimeBuffer, Timezone);
-	
-	// Write data to DS1390
-	setDateTimeAll(_DateTimeBuffer);
+  // Convert Epoch to DateTime
+  epochToDateTime (Epoch, _DateTimeBuffer, Timezone);
+  
+  // Write data to DS1390
+  setDateTimeAll(_DateTimeBuffer);
 }
 
 /* ------------------------------------------------------------------------------------------- */
