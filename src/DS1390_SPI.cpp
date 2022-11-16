@@ -853,7 +853,7 @@ uint16_t DS1390::getDateTimeYear ()
 // Arguments:   Year
 // Returns:     false if new value is equal to current or true on completion
 
-bool DS1390::setDateTimeYear (uint16_t Value)
+bool DS1390::setDateTimeYear (uint8_t Value)
 {
   // Check if new value is equal to current
   if (Value == getDateTimeYear())
